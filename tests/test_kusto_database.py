@@ -76,3 +76,27 @@ def test_collect():
     query = tbl.project(tbl.foo, tbl.bar, baz=tbl.bar).collect()
     expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar,\nbaz = bar\n"
     assert query == expected
+
+
+def test_count():
+    db = MockDatabase("test", "testdb")
+    tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = str(tbl.project(tbl.foo, tbl.bar).count())
+    expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar\n| count\n"
+    assert query == expected
+
+
+def test_count_repr():
+    assert repr(kdb.Count()) == "Count()"
+
+
+def test_distinct():
+    db = MockDatabase("test", "testdb")
+    tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = str(tbl.distinct(tbl.bar, tbl.foo).count())
+    expected = "cluster('test').database('testdb').['tbl']\n| distinct bar,\nfoo\n| count\n"
+    assert query == expected
+
+
+def test_distinct_repr():
+    assert repr(kdb.Distinct("foo", "bar")) == "Distinct(foo, bar)"

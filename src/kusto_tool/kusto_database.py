@@ -15,7 +15,32 @@ class Project:
 
     def __str__(self):
         column_list = self._build_column_list()
-        return f"| project {column_list}\n"
+        return f"| project {column_list}"
+
+
+class Count:
+    def __repr__(self):
+        return "Count()"
+
+    def __str__(self):
+        return "| count"
+
+
+class Distinct:
+    def __init__(self, *args):
+        self.columns = list(args)
+
+    def _build_column_list(self):
+        col_str = ",\n".join([str(col) for col in self.columns])
+        return col_str
+
+    def __repr__(self):
+        cols = ", ".join([str(col) for col in self.columns])
+        return f"Distinct({cols})"
+
+    def __str__(self):
+
+        return f"| distinct {self._build_column_list()}"
 
 
 class Column:
@@ -96,11 +121,20 @@ class TableExpr:
         query_str = str(self)
         return self.database.query(query_str)
 
+    def count(self):
+        self._ast.append(Count())
+        return self
+
+    def distinct(self, *args):
+        self._ast.append(Distinct(*args))
+        return self
+
     def __str__(self):
         # TODO: recursively process AST
         query_str = (
             f"cluster('{self.database.server}').database('{self.database.database}').['{self.name}']\n"
             + "\n".join([str(op) for op in self._ast])
+            + "\n"
         )
         return query_str
 

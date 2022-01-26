@@ -4,3 +4,14 @@
 
 A high-level Python library and CLI to make it easier to use Azure Data Explorer
 (aka Kusto).
+
+## TODO
+
+- [x] project
+- [x] where
+- [x] distinct
+- [ ] summarize
+- [ ] join
+- [ ] Kusto prefix function translator class
+- [ ] special types (datetime, timespan, dynamic)
+- [ ] recursive descent on expressions

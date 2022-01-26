@@ -1,6 +1,36 @@
 """A class for interacting with a Kusto database."""
 
 
+class attrdict:
+    def __init__(self, **kwargs):
+        self._dict = kwargs
+
+    def __getattr__(self, key):
+        return self._dict.get(key)
+
+
+OP = attrdict(EQ="==")
+
+
+def quote(val):
+    if isinstance(val, str):
+        return f"'{val}'"
+    return val
+
+
+class Expression:
+    def __init__(self, lhs, op, rhs):
+        self.lhs = lhs
+        self.op = op
+        self.rhs = rhs
+
+    def __str__(self):
+        return f"{self.lhs} {self.op} {quote(self.rhs)}"
+
+    def __repr__(self):
+        return f"{repr(self.lhs)} {self.op} {quote(self.rhs)}"
+
+
 class Project:
     def __init__(self, *args, **kwargs):
         self.columns = list(args)
@@ -43,6 +73,19 @@ class Distinct:
         return f"| distinct {self._build_column_list()}"
 
 
+class Where:
+    def __init__(self, *args):
+        self.expressions = list(args)
+
+    def __repr__(self):
+        exprs = " and ".join([repr(ex) for ex in self.expressions])
+        return f"Where({exprs})"
+
+    def __str__(self):
+        exprs = " and ".join([str(ex) for ex in self.expressions])
+        return f"| where {exprs}"
+
+
 class Column:
     """A column in a tabular expression."""
 
@@ -53,6 +96,12 @@ class Column:
 
     def __str__(self):
         return self.name
+
+    def __eq__(self, rhs):
+        return Expression(self, OP.EQ, rhs)
+
+    def __repr__(self):
+        return f'Column("{self.name}", {self.dtype})'
 
 
 class TableExpr:
@@ -127,6 +176,10 @@ class TableExpr:
 
     def distinct(self, *args):
         self._ast.append(Distinct(*args))
+        return self
+
+    def where(self, *args):
+        self._ast.append(Where(*args))
         return self
 
     def __str__(self):

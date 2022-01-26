@@ -1,17 +1,6 @@
 from kusto_tool import kusto_database as kdb
 from pytest import raises
-
-
-class MockDatabase:
-    """Mock database for testing."""
-
-    def __init__(self, server, database):
-        self.server = server
-        self.database = database
-
-    def query(self, query: str):
-        """Just return the query instead of running it."""
-        return query
+from .fake_database import FakeDatabase
 
 
 def test_tableexpr_getattr():
@@ -71,7 +60,7 @@ def test_tableexpr_project():
 
 
 def test_collect():
-    db = MockDatabase("test", "testdb")
+    db = FakeDatabase("test", "testdb")
     tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
     query = tbl.project(tbl.foo, tbl.bar, baz=tbl.bar).collect()
     expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar,\nbaz = bar\n"
@@ -79,7 +68,7 @@ def test_collect():
 
 
 def test_count():
-    db = MockDatabase("test", "testdb")
+    db = FakeDatabase("test", "testdb")
     tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
     query = str(tbl.project(tbl.foo, tbl.bar).count())
     expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar\n| count\n"
@@ -90,13 +79,23 @@ def test_count_repr():
     assert repr(kdb.Count()) == "Count()"
 
 
-def test_distinct():
-    db = MockDatabase("test", "testdb")
+def test_table_distinct():
+    db = FakeDatabase("test", "testdb")
     tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
-    query = str(tbl.distinct(tbl.bar, tbl.foo).count())
-    expected = "cluster('test').database('testdb').['tbl']\n| distinct bar,\nfoo\n| count\n"
+    q = str(tbl.distinct(tbl.bar, tbl.foo))
+    ex = "cluster('test').database('testdb').['tbl']\n| distinct bar,\nfoo\n"
+    assert q == ex
+
+
+def test_distinct():
+    query = str(kdb.Distinct(kdb.Column("bar", str), kdb.Column("foo", int)))
+    expected = "| distinct bar,\nfoo"
     assert query == expected
 
 
-def test_distinct_repr():
+def test_column_repr():
     assert repr(kdb.Distinct("foo", "bar")) == "Distinct(foo, bar)"
+
+
+def test_expression_repr():
+    assert repr(kdb.Column("foo", str)) == "Column(\"foo\", <class 'str'>)"

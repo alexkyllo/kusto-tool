@@ -5,7 +5,11 @@
 A high-level Python library and CLI to make it easier to use Azure Data Explorer
 (aka Kusto).
 
+Experimental, work-in-progress, unstable API.
+
 ## TODO
+
+### Query expression API
 
 - [x] project
 - [x] where

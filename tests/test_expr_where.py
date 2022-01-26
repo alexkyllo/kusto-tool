@@ -1,6 +1,7 @@
-from kusto_tool import kusto_database as kdb
-from .fake_database import FakeDatabase
+from kusto_tool import expression as exp
 from pytest import fixture
+
+from .fake_database import FakeDatabase
 
 
 @fixture
@@ -10,47 +11,47 @@ def db():
 
 @fixture
 def tbl(db):
-    return kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    return exp.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
 
 
 def test_where_eq_str():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.EQ, "a")))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.EQ, "a")))
     expected = "| where foo == 'a'"
     assert actual == expected
 
 
 def test_where_eq_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.EQ, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.EQ, 2)))
     expected = "| where foo == 2"
     assert actual == expected
 
 
 def test_where_ne_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.NE, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.NE, 2)))
     expected = "| where foo != 2"
     assert actual == expected
 
 
 def test_where_lt_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.LT, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.LT, 2)))
     expected = "| where foo < 2"
     assert actual == expected
 
 
 def test_where_lte_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.LE, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.LE, 2)))
     expected = "| where foo <= 2"
     assert actual == expected
 
 
 def test_where_gt_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.GT, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.GT, 2)))
     expected = "| where foo > 2"
     assert actual == expected
 
 
 def test_where_gte_int():
-    actual = str(kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.GE, 2)))
+    actual = str(exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.GE, 2)))
     expected = "| where foo >= 2"
     assert actual == expected
 
@@ -92,5 +93,5 @@ def test_table_where_ge(tbl):
 
 
 def test_where_repr():
-    where = kdb.Where(kdb.Expression(kdb.Column("foo", str), kdb.OP.EQ, 2))
+    where = exp.Where(exp.Expression(exp.Column("foo", str), exp.OP.EQ, 2))
     assert repr(where) == "Where(Column(\"foo\", <class 'str'>) == 2)"

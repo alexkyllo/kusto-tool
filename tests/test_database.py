@@ -1,6 +1,45 @@
-from kusto_tool import kusto_database as kdb
+from azure.kusto.data.helpers import dataframe_from_result_table
+from kusto_tool import database as kdb
+from kusto_tool import expression as exp
 from pytest import raises
-from .fake_database import FakeDatabase
+
+from .fake_database import FakeDatabase, FakeKustoClient, FakeKustoResultTable
+
+
+def test_dict_to_datatable():
+    dct = {"foo": "one", "bar": "two", "baz": "three"}
+    expected = (
+        "datatable(key: string, value: string)[\n"
+        "    'foo', 'one',\n\t'bar', 'two',\n\t'baz', 'three',\n]"
+    )
+    assert kdb.dict_to_datatable(dct) == expected
+
+
+def test_list_to_kusto():
+    lst = ["foo", "bar", "baz"]
+    expected = "dynamic([\n\t'foo',\n\t'bar',\n\t'baz'\n])"
+    assert kdb.list_to_kusto(lst) == expected
+
+
+def test_render_template_query():
+    foo = "bar"
+    actual = kdb.render_template_query("{{ foo }} | take 10", foo=foo)
+    expected = "bar | take 10"
+    assert actual == expected
+
+
+def test_execute():
+    db = kdb.KustoDatabase("help", "Samples", client=FakeKustoClient())
+    result = db.execute("StormEvents | take 10")
+    expected = dataframe_from_result_table(FakeKustoResultTable())
+    assert result.equals(expected)
+
+
+def test_execute_command():
+    db = kdb.KustoDatabase("help", "Samples", client=FakeKustoClient())
+    result = db.execute(".show table StormEvents")
+    expected = dataframe_from_result_table(FakeKustoResultTable())
+    assert result.equals(expected)
 
 
 def test_tableexpr_getattr():
@@ -22,7 +61,7 @@ def test_tableexpr_getattr_bracket():
 def test_tableexpr_getattr_column():
     """Creating table with list of Column works."""
     db = kdb.KustoDatabase("test", "testdb")
-    tbl = db.table("tbl", columns=[kdb.Column("foo", str), kdb.Column("bar", int)])
+    tbl = db.table("tbl", columns=[exp.Column("foo", str), exp.Column("bar", int)])
     assert tbl.foo.dtype == str
     assert tbl.bar.dtype == int
 
@@ -30,7 +69,7 @@ def test_tableexpr_getattr_column():
 def test_unknown_column_raises():
     """Accessing an unknown column errors."""
     db = kdb.KustoDatabase("test", "testdb")
-    tbl = db.table("tbl", columns=[kdb.Column("foo", str), kdb.Column("bar", int)])
+    tbl = db.table("tbl", columns=[exp.Column("foo", str), exp.Column("bar", int)])
     with raises(AttributeError):
         return tbl.baz
 
@@ -76,7 +115,7 @@ def test_count():
 
 
 def test_count_repr():
-    assert repr(kdb.Count()) == "Count()"
+    assert repr(exp.Count()) == "Count()"
 
 
 def test_table_distinct():
@@ -88,14 +127,14 @@ def test_table_distinct():
 
 
 def test_distinct():
-    query = str(kdb.Distinct(kdb.Column("bar", str), kdb.Column("foo", int)))
+    query = str(exp.Distinct(exp.Column("bar", str), exp.Column("foo", int)))
     expected = "| distinct bar,\nfoo"
     assert query == expected
 
 
 def test_column_repr():
-    assert repr(kdb.Distinct("foo", "bar")) == "Distinct(foo, bar)"
+    assert repr(exp.Distinct("foo", "bar")) == "Distinct(foo, bar)"
 
 
 def test_expression_repr():
-    assert repr(kdb.Column("foo", str)) == "Column(\"foo\", <class 'str'>)"
+    assert repr(exp.Column("foo", str)) == "Column(\"foo\", <class 'str'>)"

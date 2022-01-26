@@ -1,4 +1,4 @@
-"""A class for interacting with a Kusto database."""
+"""Experimental Kusto expression API for generating queries."""
 
 
 class attrdict:
@@ -143,7 +143,7 @@ class TableExpr:
         self._ast = []
         self.name = name
         self.database = database
-        # TODO: implemenct and call inspect if True
+        # TODO: implement and call inspect() to get schema metadata if True
         if columns is None:
             self.columns = {}
         elif isinstance(columns, (list, tuple)):
@@ -205,36 +205,3 @@ class TableExpr:
             + "\n"
         )
         return query_str
-
-
-class KustoDatabase:
-    """"""
-
-    def __init__(self, server, database):
-        """"""
-        self.server = server
-        self.database = database
-
-    def table(self, name, columns=None, inspect=False):
-        """A tabular expression.
-
-        Parameters
-        ----------
-        name: str
-            The name of the table in the database.
-        database: KustoDatabase
-            The name of the database containing the table.
-        columns: dict or list
-            Either:
-            1. A dictionary where keys are column names and values are
-            data type names, or
-            2. A list of Column instances.
-        inspect: bool, default False
-            If true, columns will be inspected from the database. If columns
-            list is provided and inspect is true, inspect takes precedence.
-        """
-        return TableExpr(name, database=self, columns=columns, inspect=inspect)
-
-    def query(self):
-        """"""
-        # TODO

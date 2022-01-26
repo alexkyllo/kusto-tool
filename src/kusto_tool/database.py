@@ -35,6 +35,29 @@ def render_template_query(query: str, *args, **kwargs) -> str:
     return jj.Template(query).render(*args, **converted_kwargs)
 
 
+def render_set_or_append(
+    query: str, table: str, folder: str, docstring: str, *args, **kwargs
+) -> str:
+    """"""
+    query_rendered = render_template_query(query, *args, **kwargs)
+    set_append_template = """.set-or-append {{ table }}
+with (
+folder = "{{ folder }}",
+docstring = "{{ docstring }}",
+)
+<|
+{{ query_string }}
+"""
+    command_rendered = render_template_query(
+        set_append_template,
+        table=table,
+        folder=folder,
+        docstring=docstring,
+        query_string=query_rendered,
+    )
+    return command_rendered
+
+
 class KustoDatabase:
     """"""
 

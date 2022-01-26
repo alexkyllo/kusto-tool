@@ -42,6 +42,23 @@ def test_execute_command():
     assert result.equals(expected)
 
 
+def test_render_set_or_append():
+    result = kdb.render_set_or_append(
+        "StormEvents | take 10",
+        table="StormEventsTake10",
+        folder="myfolder",
+        docstring="mydocstring",
+    )
+    expected = """.set-or-append StormEventsTake10
+with (
+folder = "myfolder",
+docstring = "mydocstring",
+)
+<|
+StormEvents | take 10"""
+    assert result == expected
+
+
 def test_tableexpr_getattr():
     """Columns can be got from table with . operator"""
     db = kdb.KustoDatabase("test", "testdb")

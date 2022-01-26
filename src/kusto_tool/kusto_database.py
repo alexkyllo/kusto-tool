@@ -6,10 +6,10 @@ class attrdict:
         self._dict = kwargs
 
     def __getattr__(self, key):
-        return self._dict.get(key)
+        return self._dict[key]
 
 
-OP = attrdict(EQ="==")
+OP = attrdict(EQ="==", NE="!=", GT=">", LT="<", GE=">=", LE="<=")
 
 
 def quote(val):
@@ -99,6 +99,21 @@ class Column:
 
     def __eq__(self, rhs):
         return Expression(self, OP.EQ, rhs)
+
+    def __ne__(self, rhs):
+        return Expression(self, OP.NE, rhs)
+
+    def __lt__(self, rhs):
+        return Expression(self, OP.LT, rhs)
+
+    def __le__(self, rhs):
+        return Expression(self, OP.LE, rhs)
+
+    def __gt__(self, rhs):
+        return Expression(self, OP.GT, rhs)
+
+    def __ge__(self, rhs):
+        return Expression(self, OP.GE, rhs)
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'

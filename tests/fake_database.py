@@ -1,3 +1,4 @@
+"""Test fakes."""
 import pandas as pd
 from azure.kusto.data._models import KustoResultColumn
 from azure.kusto.data.response import KustoResponseDataSetV2, KustoResultTable
@@ -16,10 +17,9 @@ class FakeDatabase:
 
 
 class FakeKustoResponseDataSet(KustoResponseDataSetV2):
-    """"""
-
     def __init__(self, tables):
         self.tables = tables
+        self.query = None
 
     @property
     def primary_results(self):
@@ -27,29 +27,21 @@ class FakeKustoResponseDataSet(KustoResponseDataSetV2):
 
 
 class FakeKustoResultTable(KustoResultTable):
-    def __init__(self):
-        self.columns = [
-            KustoResultColumn({"ColumnName": "fake_column", "ColumnType": "string"}, ordinal=0),
-            KustoResultColumn({"ColumnName": "row_number", "ColumnType": "int"}, ordinal=1),
-        ]
-        self.raw_rows = [
-            [
-                "fake data",
-                1,
-            ],
-            [
-                "fake data",
-                2,
-            ],
-        ]
+    def __init__(self, columns, rows):
+        self.columns = columns
+        self.raw_rows = rows
 
 
 class FakeKustoClient:
     """Fake KustoClient for testing."""
 
+    def __init__(self, table):
+        self.response = FakeKustoResponseDataSet([FakeKustoResultTable(table)])
+
     def execute_mgmt(self, database, query):
-        res = FakeKustoResponseDataSet([FakeKustoResultTable()])
-        return res
+        self.response.query = query
+        return self.response
 
     def execute_query(self, database, query):
-        return self.execute_mgmt(database, query)
+        self.response.query = query
+        return self.response

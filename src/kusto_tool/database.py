@@ -25,7 +25,7 @@ def dict_to_datatable(dictionary: dict) -> str:
     return stmt
 
 
-def render_template_query(query: str, *args, **kwargs) -> str:
+def render_template_query(query, *args, **kwargs) -> str:
     """Render a query with optional parameters."""
     # Any list arguments need to be converted to Kusto list strings
     converted_kwargs = {
@@ -35,12 +35,11 @@ def render_template_query(query: str, *args, **kwargs) -> str:
     return jj.Template(query).render(*args, **converted_kwargs)
 
 
-def render_set_or_append(
-    query: str, table: str, folder: str, docstring: str, *args, **kwargs
-) -> str:
-    """"""
+def render_set(query, table, folder, docstring, replace=False, *args, **kwargs) -> str:
+    """Render a .set-or-[append|replace] command from a query."""
     query_rendered = render_template_query(query, *args, **kwargs)
-    set_append_template = """.set-or-append {{ table }}
+    command = "replace" if replace else "append"
+    set_append_template = """.set-or-{{ command }} {{ table }}
 with (
 folder = "{{ folder }}",
 docstring = "{{ docstring }}",
@@ -50,6 +49,7 @@ docstring = "{{ docstring }}",
 """
     command_rendered = render_template_query(
         set_append_template,
+        command=command,
         table=table,
         folder=folder,
         docstring=docstring,
@@ -133,3 +133,58 @@ class KustoDatabase:
         duration = end_time - start_time
         logger.info("Query execution completed in {:.2f} seconds.", duration)
         return dataframe_from_result_table(result.primary_results[0])
+
+    def show_tables(self):
+        """Show the list of tables in the database.
+
+        Returns
+        -------
+        pandas.DataFrame: A DataFrame listing all tables in the database, in the
+        column "TableName".
+        """
+        return self.execute(".show tables")
+
+    def table_exists(self, table: str) -> bool:
+        """Check if a table exists in the database.
+
+        Parameters
+        ----------
+        table: str
+            The name of the table to look for.
+
+        Returns
+        -------
+        bool: True if the table exists in the database.
+        """
+        tables = self.show_tables()
+        return table in tables.TableName.tolist()
+
+    def set(self, query, table, folder, docstring, *args, **kwargs):
+        """
+        Runs your query and appends or replaces the results to a table.
+
+        Parameters
+        ----------
+        query: str
+            The text of the Kusto query to run.
+        table: str
+            The table name to create.
+        folder: str
+            The kusto folder to save the table into.
+        docstring: str
+            The docstring for the table metadata.
+        replace: bool, default False.
+            Appends to the table if True, replaces contents if False.
+        args: List[Any]
+            Positional arguments to pass to the query as Jinja2 template params.
+        kwargs: Dict[Any]
+            Keyword arguments to pass to the query as Jinja2 template params.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the results of the control command.
+        """
+        return self.execute(
+            render_set(query, table, folder, docstring, replace=False, *args, **kwargs),
+        )

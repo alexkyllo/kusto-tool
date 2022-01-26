@@ -28,28 +28,32 @@ def test_render_template_query():
     assert actual == expected
 
 
-def test_execute():
-    db = kdb.KustoDatabase("help", "Samples", client=FakeKustoClient())
-    result = db.execute("StormEvents | take 10")
-    expected = dataframe_from_result_table(FakeKustoResultTable())
-    assert result.equals(expected)
-
-
-def test_execute_command():
-    db = kdb.KustoDatabase("help", "Samples", client=FakeKustoClient())
-    result = db.execute(".show table StormEvents")
-    expected = dataframe_from_result_table(FakeKustoResultTable())
-    assert result.equals(expected)
-
-
-def test_render_set_or_append():
-    result = kdb.render_set_or_append(
+def test_render_set():
+    result = kdb.render_set(
         "StormEvents | take 10",
         table="StormEventsTake10",
         folder="myfolder",
         docstring="mydocstring",
     )
     expected = """.set-or-append StormEventsTake10
+with (
+folder = "myfolder",
+docstring = "mydocstring",
+)
+<|
+StormEvents | take 10"""
+    assert result == expected
+
+
+def test_render_set_replace():
+    result = kdb.render_set(
+        "StormEvents | take 10",
+        table="StormEventsTake10",
+        folder="myfolder",
+        docstring="mydocstring",
+        replace=True,
+    )
+    expected = """.set-or-replace StormEventsTake10
 with (
 folder = "myfolder",
 docstring = "mydocstring",

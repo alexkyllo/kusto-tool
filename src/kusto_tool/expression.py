@@ -9,7 +9,7 @@ class attrdict:
         return self._dict[key]
 
 
-OP = attrdict(EQ="==", NE="!=", GT=">", LT="<", GE=">=", LE="<=")
+OP = attrdict(EQ="==", NE="!=", GT=">", LT="<", GE=">=", LE="<=", CONTAINS="contains")
 
 
 def quote(val):
@@ -114,6 +114,9 @@ class Column:
 
     def __ge__(self, rhs):
         return Expression(self, OP.GE, rhs)
+
+    def contains(self, rhs):
+        return Expression(self, OP.CONTAINS, rhs)
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'

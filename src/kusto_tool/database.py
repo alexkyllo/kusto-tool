@@ -189,13 +189,27 @@ class KustoDatabase:
             render_set(query, table, folder, docstring, replace=False, *args, **kwargs),
         )
 
+
 class Cluster:
     """A class representing a Kusto cluster."""
+
     def __init__(self, name):
-        self.name=name
+        self.name = name
+
     def database(self, name):
-        """Create an instance representing a database in the cluster."""
-        return KustoCluster(self.name, name)
+        """Create an instance representing a database in the cluster.
+
+        Parameters
+        ----------
+        name: str
+            The name of the Kusto database in the cluster.
+
+        Returns
+        -------
+        KustoDatabase: an instance representing the Kusto database.
+        """
+        return KustoDatabase(self.name, name)
+
 
 def cluster(name):
     return Cluster(name)

@@ -99,6 +99,22 @@ class Where:
         return f"| where {exprs}"
 
 
+class Join:
+    def __init__(self, right, on, kind, strategy=None):
+        self.right = right
+        self.on = [on] if isinstance(on, str) else on
+        self.kind = kind
+        self.strategy = strategy
+
+    def __str__(self):
+        on_list = ", ".join([str(col) for col in self.on])
+        if self.strategy:
+            strategy_str = f"hint.strategy={self.strategy} "
+        else:
+            strategy_str = ""
+        return f"| join kind={self.kind} {strategy_str}(\n\t{self.right}) on {on_list}"
+
+
 class Column:
     """A column in a tabular expression."""
 
@@ -155,7 +171,7 @@ class TableExpr:
         name: str
             The name of the table in the database.
         database: KustoDatabase
-            The name of the database containing the table.
+            The database containing the table.
         columns: dict or list
             Either:
             1. A dictionary where keys are column names and values are
@@ -222,11 +238,37 @@ class TableExpr:
         self._ast.append(Where(*args))
         return self
 
+    def join(self, right, on, kind, strategy=None, *args):
+        """Join this table expression to another.
+
+        Parameters
+        ----------
+        right: TableExpr
+            The table to join this table to.
+        on: [str]
+            The list of columns to join on.
+        kind: str
+            The kind of join. Options:
+            - "inner"
+            - "left"
+            - "right"
+            - "full"
+            - "leftsemi"
+            - "rightsemi"
+            - "leftanti"
+            - "rightanti"
+        Returns
+        -------
+
+        """
+        self._ast.append(Join(right, on, kind=kind, strategy=strategy))
+        return self
+
     def __str__(self):
         # TODO: recursively process AST
-        query_str = (
-            f"cluster('{self.database.server}').database('{self.database.database}').['{self.name}']\n"
-            + "\n".join([str(op) for op in self._ast])
-            + "\n"
-        )
+        ops = [
+            f"cluster('{self.database.server}').database('{self.database.database}').['{self.name}']",
+            *self._ast,
+        ]
+        query_str = "\n".join([str(op) for op in ops]) + "\n"
         return query_str

@@ -9,13 +9,60 @@ Experimental, work-in-progress, unstable API.
 
 ## TODO
 
+### Database API
+
+#### Table management 
+
+- [x] .set-or-append table
+- [x] .set-or-replace table
+- [ ] .drop table
+- [ ] .append table
+- [ ] .create table
+- [ ] .create-merge table
+ 
+#### Function management
+
+- [ ] .create-or-alter function
+- [ ] .drop function
+
+#### Policy management
+
+- [ ] retention policy
+- [ ] sharding policy
+
+#### Access management
+
+- [ ] .show [table|database] principals
+- [ ] .add [table|database] [users|admins]
+
 ### Query expression API
 
 - [x] project
 - [x] where
 - [x] distinct
-- [ ] summarize
-- [ ] join
+- [x] summarize
+- [x] join
+- [ ] datatable
+- [ ] evaluate
+- [ ] extend
+- [ ] facet
+- [ ] find
+- [ ] fork
+- [ ] getschema
+- [ ] invoke
+- [ ] lookup
+- [ ] mv-apply
+- [ ] mv-expand
+- [ ] order by, sort
+- [ ] parse
+- [ ] partition
+- [ ] pivot
+- [ ] range
+- [ ] sample, sample-distinct
+- [ ] search
+- [ ] serialize
+- [ ] take, limit
+- [ ] top, top-hitters
 - [ ] Kusto prefix function translator class
 - [ ] special types (datetime, timespan, dynamic)
 - [ ] recursive descent on expressions

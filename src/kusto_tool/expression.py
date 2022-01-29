@@ -115,6 +115,21 @@ class Join:
         return f"| join kind={self.kind} {strategy_str}(\n\t{self.right}) on {on_list}"
 
 
+class Summarize:
+    def __init__(self, *args, by=None):
+        self.expressions = args
+        self.by = [] if by is None else by
+
+    def __str__(self):
+        expr_list = ",".join([str(expr) for expr in self.expressions])
+        by_list = ", ".join([str(col) for col in self.by])
+        if by_list:
+            by_list = f"by {by_list}"
+        clause = f"| summarize{expr_list}\n\t{by_list}"
+
+        return clause
+
+
 class Column:
     """A column in a tabular expression."""
 
@@ -155,6 +170,9 @@ class Column:
 
     def nhas(self, rhs):
         return Expression(self, OP.NHAS, rhs)
+
+    def sum(self, rhs):
+        return Expression()
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'

@@ -22,6 +22,7 @@ OP = attrdict(
     NE="!=",
     NHAS="!has",
     NIN="!in",
+    SUM="sum",
 )
 
 
@@ -31,7 +32,18 @@ def quote(val):
     return val
 
 
-class Expression:
+class UnaryExpression:
+    """"""
+
+    def __init__(self, term, op):
+        self.term = term
+        self.op = op
+
+    def __str__(self):
+        return f"{self.op}({self.term})"
+
+
+class BinaryExpression:
     def __init__(self, lhs, op, rhs):
         self.lhs = lhs
         self.op = op
@@ -116,16 +128,26 @@ class Join:
 
 
 class Summarize:
-    def __init__(self, *args, by=None):
-        self.expressions = args
-        self.by = [] if by is None else by
+    def __init__(self, *args, by=None, **kwargs):
+        converted_args = {f"{str(v.op)}_{str(v.term)}": v for v in args}
+        self.expressions = {**converted_args, **kwargs}
+        if by is None:
+            self.by = []
+        elif isinstance(by, str):
+            self.by = [by]
+        else:
+            self.by = by
 
     def __str__(self):
-        expr_list = ",".join([str(expr) for expr in self.expressions])
+        if self.expressions:
+            expr_list = ",".join([f"{str(k)}={str(v)}" for k, v in self.expressions.items()])
+            expr_list = f"\n\t{expr_list}"
+        else:
+            expr_list = ""
         by_list = ", ".join([str(col) for col in self.by])
         if by_list:
-            by_list = f"by {by_list}"
-        clause = f"| summarize{expr_list}\n\t{by_list}"
+            by_list = f"\n\tby {by_list}"
+        clause = f"| summarize{expr_list}{by_list}"
 
         return clause
 
@@ -142,37 +164,37 @@ class Column:
         return self.name
 
     def __eq__(self, rhs):
-        return Expression(self, OP.EQ, rhs)
+        return BinaryExpression(self, OP.EQ, rhs)
 
     def __ne__(self, rhs):
-        return Expression(self, OP.NE, rhs)
+        return BinaryExpression(self, OP.NE, rhs)
 
     def __lt__(self, rhs):
-        return Expression(self, OP.LT, rhs)
+        return BinaryExpression(self, OP.LT, rhs)
 
     def __le__(self, rhs):
-        return Expression(self, OP.LE, rhs)
+        return BinaryExpression(self, OP.LE, rhs)
 
     def __gt__(self, rhs):
-        return Expression(self, OP.GT, rhs)
+        return BinaryExpression(self, OP.GT, rhs)
 
     def __ge__(self, rhs):
-        return Expression(self, OP.GE, rhs)
+        return BinaryExpression(self, OP.GE, rhs)
 
     def contains(self, rhs):
-        return Expression(self, OP.CONTAINS, rhs)
+        return BinaryExpression(self, OP.CONTAINS, rhs)
 
     def ncontains(self, rhs):
-        return Expression(self, OP.NCONTAINS, rhs)
+        return BinaryExpression(self, OP.NCONTAINS, rhs)
 
     def has(self, rhs):
-        return Expression(self, OP.HAS, rhs)
+        return BinaryExpression(self, OP.HAS, rhs)
 
     def nhas(self, rhs):
-        return Expression(self, OP.NHAS, rhs)
+        return BinaryExpression(self, OP.NHAS, rhs)
 
-    def sum(self, rhs):
-        return Expression()
+    def sum(self):
+        return UnaryExpression(self, OP.SUM)
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'
@@ -280,6 +302,21 @@ class TableExpr:
 
         """
         self._ast.append(Join(right, on, kind=kind, strategy=strategy))
+        return self
+
+    def summarize(self, *args, by=None, **kwargs):
+        """Aggregate by columns.
+
+        Parameters
+        ----------
+        args: list
+            Un-aliased expressions, e.g. foo.sum().
+        by: list
+            List of Column instances or column name strings to group by.
+        kwargs: Dict
+            Aliased expressions, e.g. bar=foo.sum()
+        """
+        self._ast.append(Summarize(*args, by=by, **kwargs))
         return self
 
     def __str__(self):

@@ -1,27 +1,52 @@
-from kusto_tool.expression import Column, Summarize
+from kusto_tool.expression import Column, Summarize, TableExpr
 
 from .fake_database import FakeDatabase
 
 
-def test_summarize_by():
+def test_summarize_by_list_str():
+    """by clause can be included in summarize as a list of strings"""
     result = str(Summarize(by=["foo", "bar"]))
     expected = "| summarize\n\tby foo, bar"
     assert result == expected
 
 
+def test_summarize_by_str():
+    """by clause can be included in summarize as a single string"""
+    result = str(Summarize(by="foo"))
+    expected = "| summarize\n\tby foo"
+    assert result == expected
+
+
+def test_summarize_by_list_col():
+    """by clause can be included in summarize as a list of columns"""
+    result = str(Summarize(by=[Column("foo", str), Column("bar", str)]))
+    expected = "| summarize\n\tby foo, bar"
+    assert result == expected
+
+
+def test_summarize_by_col():
+    """by clause can be included in summarize as a single Column"""
+    result = str(Summarize(by=Column("foo", str)))
+    expected = "| summarize\n\tby foo"
+    assert result == expected
+
+
 def test_summarize_noby():
+    """by clause can be omitted from summarize"""
     result = str(Summarize(baz=Column("bar", int).sum()))
     expected = "| summarize\n\tbaz=sum(bar)"
     assert result == expected
 
 
 def test_summarize_sum_by():
+    """summarize can use sum()"""
     result = str(Summarize(baz=Column("bar", int).sum(), by="foo"))
     expected = "| summarize\n\tbaz=sum(bar)\n\tby foo"
     assert result == expected
 
 
 def test_summarize_strategy():
+    """shuffle parameter works"""
     result = str(Summarize(baz=Column("bar", int).sum(), by="foo", shuffle=True))
     expected = "| summarize hint.strategy=shuffle\n\tbaz=sum(bar)\n\tby foo"
     assert result == expected
@@ -87,4 +112,17 @@ def test_summarize_strategy_partitions_ignored():
         )
     )
     expected = "| summarize\n\tbaz=sum(bar)\n\tby foo"
+    assert result == expected
+
+
+def test_tableexpr_summarize():
+    """TableExpr.summarize calls Summarize correctly"""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    result = str(tbl.summarize(sum_foo=Column("foo", str).sum(), by="bar"))
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tsum_foo=sum(foo)
+\tby bar
+"""
     assert result == expected

@@ -128,15 +128,29 @@ class Join:
 
 
 class Summarize:
-    def __init__(self, *args, by=None, **kwargs):
+    def __init__(
+        self, *args, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs
+    ):
         converted_args = {f"{str(v.op)}_{str(v.term)}": v for v in args}
         self.expressions = {**converted_args, **kwargs}
         if by is None:
             self.by = []
-        elif isinstance(by, str):
+        elif isinstance(by, (str, Column)):
             self.by = [by]
         else:
             self.by = by
+        # shufflekey takes precedence over shuffle. If shufflekey, then shuffle.
+        self.shuffle = bool(shuffle or shufflekey)
+        if shufflekey:
+            if isinstance(shufflekey, (str, Column)):
+                self.shufflekey = [shufflekey]
+            else:
+                self.shufflekey = shufflekey
+        else:
+            self.shufflekey = []
+        # num_partitions is ignored unless shuffle or shufflekey
+        if self.shuffle:
+            self.num_partitions = num_partitions
 
     def __str__(self):
         if self.expressions:
@@ -147,7 +161,17 @@ class Summarize:
         by_list = ", ".join([str(col) for col in self.by])
         if by_list:
             by_list = f"\n\tby {by_list}"
-        clause = f"| summarize{expr_list}{by_list}"
+        shuffle_str = ""
+        if self.shuffle:
+            if self.shufflekey:
+                key = ", ".join([str(col) for col in self.shufflekey])
+                shuffle_str = f" hint.shufflekey={key}"
+            else:
+                shuffle_str = f" hint.strategy=shuffle"
+        partition_str = ""
+        if self.shuffle and self.num_partitions:
+            partition_str = f" hint.num_partitions={self.num_partitions}"
+        clause = f"| summarize{shuffle_str}{partition_str}{expr_list}{by_list}"
 
         return clause
 
@@ -304,19 +328,43 @@ class TableExpr:
         self._ast.append(Join(right, on, kind=kind, strategy=strategy))
         return self
 
-    def summarize(self, *args, by=None, **kwargs):
+    def summarize(
+        self, *args, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs
+    ):
         """Aggregate by columns.
 
         Parameters
         ----------
         args: list
             Un-aliased expressions, e.g. foo.sum().
-        by: list
+        by: list, default None
             List of Column instances or column name strings to group by.
+        shuffle: bool, default False
+            If True, `hint.strategy=shuffle` will be added to the Kusto query.
+            The shufflekey parameter takes precedence; if it is not None, then
+            shuffle will be ignored.
+        shufflekey: [str], str, [Column], Column or bool, default None
+            Indicates the key to be used for the shuffle summarize strategy. If
+            a string or Column instance, or list thereof, is provided, these
+            columns will be used as the shufflekey; `hint.shufflekey=foo, bar`
+            will be added to the Kusto query.
+        num_partitions: int, default None
+            A query hint indicating the number of partitions to be used in the
+            shuffle strategy. Has no effect unless `shuffle` or `shufflekey` is
+            also provided.
         kwargs: Dict
             Aliased expressions, e.g. bar=foo.sum()
         """
-        self._ast.append(Summarize(*args, by=by, **kwargs))
+        self._ast.append(
+            Summarize(
+                *args,
+                by=by,
+                shuffle=shuffle,
+                shufflekey=shufflekey,
+                num_partitions=num_partitions,
+                **kwargs,
+            )
+        )
         return self
 
     def __str__(self):

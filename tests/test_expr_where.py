@@ -101,11 +101,17 @@ def test_where_and():
     foo = exp.Column("foo", str)
     bar = exp.Column("bar", str)
     where = exp.Where((foo == "a") & (bar == "b"))
-    assert str(where) == "| where foo == 'a' and bar == 'b'"
+    assert str(where) == "| where (foo == 'a') and (bar == 'b')"
 
 
 def test_where_or():
     foo = exp.Column("foo", str)
     bar = exp.Column("bar", str)
     where = exp.Where((foo == "a") | (bar == "b"))
-    assert str(where) == "| where foo == 'a' or bar == 'b'"
+    assert str(where) == "| where (foo == 'a') or (bar == 'b')"
+
+
+def test_not():
+    foo = exp.Column("foo", bool)
+    where = exp.Where(~(foo == "a"))
+    assert str(where) == "| where not(foo == 'a')"

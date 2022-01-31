@@ -25,6 +25,7 @@ OP = attrdict(
     SUM="sum",
     AND="and",
     OR="or",
+    NOT="not",
 )
 
 
@@ -54,6 +55,8 @@ class BinaryExpression:
         self.rhs = rhs
 
     def __str__(self):
+        if self.op in [OP.AND, OP.OR]:
+            return f"({self.lhs}) {self.op} ({quote(self.rhs)})"
         return f"{self.lhs} {self.op} {quote(self.rhs)}"
 
     def __repr__(self):

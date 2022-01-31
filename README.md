@@ -42,6 +42,7 @@ Experimental, work-in-progress, unstable API.
 - [x] distinct
 - [x] summarize
 - [x] join
+- [x] parenthesize or/and expressions
 - [ ] datatable
 - [ ] evaluate
 - [ ] extend
@@ -65,4 +66,4 @@ Experimental, work-in-progress, unstable API.
 - [ ] top, top-hitters
 - [ ] Kusto prefix function translator class
 - [ ] special types (datetime, timespan, dynamic)
-- [ ] parenthetical expressions
+

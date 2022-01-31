@@ -48,9 +48,9 @@ class UnaryExpression:
 
 
 class BinaryExpression:
-    def __init__(self, lhs, op, rhs):
-        self.lhs = lhs
+    def __init__(self, op, lhs, rhs):
         self.op = op
+        self.lhs = lhs
         self.rhs = rhs
 
     def __str__(self):
@@ -60,10 +60,13 @@ class BinaryExpression:
         return f"{repr(self.lhs)} {self.op} {quote(self.rhs)}"
 
     def __and__(self, rhs):
-        return BinaryExpression(self, OP.AND, rhs)
+        return BinaryExpression(OP.AND, self, rhs)
 
     def __or__(self, rhs):
-        return BinaryExpression(self, OP.OR, rhs)
+        return BinaryExpression(OP.OR, self, rhs)
+
+    def __invert__(self):
+        return UnaryExpression(OP.NOT, self)
 
 
 class Project:
@@ -201,34 +204,34 @@ class Column:
         return self.name
 
     def __eq__(self, rhs):
-        return BinaryExpression(self, OP.EQ, rhs)
+        return BinaryExpression(OP.EQ, self, rhs)
 
     def __ne__(self, rhs):
-        return BinaryExpression(self, OP.NE, rhs)
+        return BinaryExpression(OP.NE, self, rhs)
 
     def __lt__(self, rhs):
-        return BinaryExpression(self, OP.LT, rhs)
+        return BinaryExpression(OP.LT, self, rhs)
 
     def __le__(self, rhs):
-        return BinaryExpression(self, OP.LE, rhs)
+        return BinaryExpression(OP.LE, self, rhs)
 
     def __gt__(self, rhs):
-        return BinaryExpression(self, OP.GT, rhs)
+        return BinaryExpression(OP.GT, self, rhs)
 
     def __ge__(self, rhs):
-        return BinaryExpression(self, OP.GE, rhs)
+        return BinaryExpression(OP.GE, self, rhs)
 
     def contains(self, rhs):
-        return BinaryExpression(self, OP.CONTAINS, rhs)
+        return BinaryExpression(OP.CONTAINS, self, rhs)
 
     def ncontains(self, rhs):
-        return BinaryExpression(self, OP.NCONTAINS, rhs)
+        return BinaryExpression(OP.NCONTAINS, self, rhs)
 
     def has(self, rhs):
-        return BinaryExpression(self, OP.HAS, rhs)
+        return BinaryExpression(OP.HAS, self, rhs)
 
     def nhas(self, rhs):
-        return BinaryExpression(self, OP.NHAS, rhs)
+        return BinaryExpression(OP.NHAS, self, rhs)
 
     def sum(self):
         return UnaryExpression(OP.SUM, self)

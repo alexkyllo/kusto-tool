@@ -43,9 +43,11 @@ Experimental, work-in-progress, unstable API.
 - [x] summarize
 - [x] join
 - [x] parenthesize or/and expressions
+- [x] extend
+- [x] order by, sort
+- [ ] asc, desc
 - [ ] datatable
 - [ ] evaluate
-- [ ] extend
 - [ ] facet
 - [ ] find
 - [ ] fork
@@ -54,7 +56,6 @@ Experimental, work-in-progress, unstable API.
 - [ ] lookup
 - [ ] mv-apply
 - [ ] mv-expand
-- [ ] order by, sort
 - [ ] parse
 - [ ] partition
 - [ ] pivot

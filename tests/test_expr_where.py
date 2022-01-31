@@ -115,3 +115,10 @@ def test_not():
     foo = exp.Column("foo", bool)
     where = exp.Where(~(foo == "a"))
     assert str(where) == "| where not(foo == 'a')"
+
+
+def test_where_cols():
+    foo = exp.Column("foo", str)
+    bar = exp.Column("bar", str)
+    where = exp.Where(foo == bar)
+    assert str(where) == "| where foo == bar"

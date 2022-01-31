@@ -159,3 +159,20 @@ def test_column_repr():
 
 def test_expression_repr():
     assert repr(exp.Column("foo", str)) == "Column(\"foo\", <class 'str'>)"
+
+
+def test_get_columns():
+    db = FakeDatabase("test", "testdb")
+    tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str})
+    assert tbl.foo == tbl.columns["foo"]
+
+
+def test_extend():
+    db = FakeDatabase("test", "testdb")
+    tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str})
+    tbl_2 = tbl.extend(bar="baz")
+    query = str(tbl_2)
+    expected = "cluster('test').database('testdb').['tbl']\n| extend\n\tbar='baz'\n"
+    assert "bar" in tbl_2.columns
+    assert "bar" not in tbl.columns
+    assert query == expected

@@ -1,6 +1,9 @@
 """Experimental Kusto expression API for generating queries."""
 
 
+from copy import copy
+
+
 class attrdict:
     def __init__(self, **kwargs):
         self._dict = kwargs
@@ -26,6 +29,10 @@ OP = attrdict(
     AND="and",
     OR="or",
     NOT="not",
+    ADD="+",
+    SUB="-",
+    MUL="*",
+    DIV="/",
 )
 
 
@@ -70,6 +77,15 @@ class BinaryExpression:
 
     def __invert__(self):
         return UnaryExpression(OP.NOT, self)
+
+
+def typeof(expr):
+    """Get the type of an expression."""
+    if isinstance(expr, BinaryExpression):
+        return expr.lhs.dtype
+    if isinstance(expr, UnaryExpression):
+        return expr.terms[0].dtype
+    return type(expr)
 
 
 class Project:
@@ -193,6 +209,24 @@ class Summarize:
         clause = f"| summarize{shuffle_str}{partition_str}{expr_list}{by_list}"
 
         return clause
+
+
+class Extend:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def __str__(self):
+        kvs = ",\n\t".join([f"{k}={quote(v)}" for k, v in self.kwargs.items()])
+        return f"| extend\n\t{kvs}"
+
+
+class Order:
+    def __init__(self, *args):
+        self.args = args
+
+    def __str__(self):
+        args_str = ",\n\t".join([quote(arg) for arg in self.args])
+        return f"| order by\n\t{args_str}"
 
 
 class Column:
@@ -387,8 +421,25 @@ class TableExpr:
         )
         return self
 
+    def extend(self, **kwargs):
+        """Add new columns calculated from expressions.
+
+        Parameters
+        ----------
+        kwargs: dict
+            Aliased expressions, e.g. foo="bar", baz="quux"
+        """
+        self._ast.append(Extend(**kwargs))
+        new_cols = {}
+        for key, val in kwargs.items():
+            if key not in self.columns:
+                new_cols[key] = Column(key, typeof(val))
+        columns = {**self.columns, **new_cols}
+        new_inst = TableExpr(self.name, self.database, columns)
+        new_inst._ast = self._ast
+        return new_inst
+
     def __str__(self):
-        # TODO: recursively process AST
         ops = [
             f"cluster('{self.database.cluster}').database('{self.database.database}').['{self.name}']",
             *self._ast,

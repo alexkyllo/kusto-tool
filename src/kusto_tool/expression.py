@@ -336,6 +336,7 @@ class TableExpr:
         A table expression.
         """
         self._ast.append(Project(*args, **kwargs))
+        # TODO: update column list, like with extend
         return self
 
     def collect(self):

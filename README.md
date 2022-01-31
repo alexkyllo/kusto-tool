@@ -46,6 +46,7 @@ Experimental, work-in-progress, unstable API.
 - [x] extend
 - [x] order by, sort
 - [ ] asc, desc
+- [ ] update column list from project
 - [ ] datatable
 - [ ] evaluate
 - [ ] facet

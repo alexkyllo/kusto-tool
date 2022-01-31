@@ -41,11 +41,21 @@ def test_table_shuffle_join():
     assert str(join) == expected
 
 
-def test_shuffle_join_str():
+def test_broadcast_join_str():
     db = FakeDatabase("test", "testdb")
     t1 = TableExpr("table1", db, columns=dict(foo=str, bar=str, baz=int))
     result = str(Join(t1, on="foo", kind="inner", strategy="broadcast"))
     expected = """| join kind=inner hint.strategy=broadcast (
+\tcluster('test').database('testdb').['table1']
+) on foo"""
+    assert result == expected
+
+
+def test_other_join_str():
+    db = FakeDatabase("test", "testdb")
+    t1 = TableExpr("table1", db, columns=dict(foo=str, bar=str, baz=int))
+    result = str(Join(t1, on="foo", kind="inner", strategy="silly"))
+    expected = """| join kind=inner (
 \tcluster('test').database('testdb').['table1']
 ) on foo"""
     assert result == expected

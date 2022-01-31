@@ -12,6 +12,7 @@ from kusto_tool.expression import TableExpr
 
 
 def list_to_kusto(lst):
+    # TODO: make this work for types other than string
     return "dynamic([\n\t'" + "',\n\t'".join(list(lst)) + "'\n])"
 
 
@@ -61,22 +62,22 @@ docstring = "{{ docstring }}",
 class KustoDatabase:
     """"""
 
-    def __init__(self, server, database, client=None):
+    def __init__(self, cluster, database, client=None):
         """A class representing a Kusto database.
 
         Parameters
         ----------
-        server: str
+        cluster: str
             The cluster name.
         database: str
             The database name.
         client: KustoClient, default None
             Pass this if you wish to provide your own KustoClient.
         """
-        self.server = server
-        self.server_uri = f"https://{server}.kusto.windows.net"
+        self.cluster = cluster
+        self.cluster_uri = f"https://{cluster}.kusto.windows.net"
         self.database = database
-        kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(self.server_uri)
+        kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(self.cluster_uri)
         self.client = client or KustoClient(kcsb)
 
     def table(self, name, columns=None, inspect=False):
@@ -144,6 +145,21 @@ class KustoDatabase:
         """
         return self.execute(".show tables")
 
+    def drop_table(self, table):
+        """Drop a table from the database.
+
+        Parameters
+        ----------
+        table: str
+            The name of the table to drop.
+
+        Returns
+        -------
+        pandas.DataFrame: A DataFrame containing the name of the dropped table,
+        indicating success.
+        """
+        return self.execute(f".drop table {table}")
+
     def table_exists(self, table: str) -> bool:
         """Check if a table exists in the database.
 
@@ -189,6 +205,9 @@ class KustoDatabase:
             render_set(query, table, folder, docstring, replace=False, *args, **kwargs),
         )
 
+    def __str__(self):
+        return f"{str(self.cluster)}.database('{self.database}')"
+
 
 class Cluster:
     """A class representing a Kusto cluster."""
@@ -209,6 +228,9 @@ class Cluster:
         KustoDatabase: an instance representing the Kusto database.
         """
         return KustoDatabase(self.name, name)
+
+    def __str__(self):
+        return f"cluster('{self.name}')"
 
 
 def cluster(name):

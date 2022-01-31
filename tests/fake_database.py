@@ -7,8 +7,8 @@ from azure.kusto.data.response import KustoResponseDataSetV2, KustoResultTable
 class FakeDatabase:
     """Fake database for testing."""
 
-    def __init__(self, server, database):
-        self.server = server
+    def __init__(self, cluster, database):
+        self.cluster = cluster
         self.database = database
 
     def query(self, query):

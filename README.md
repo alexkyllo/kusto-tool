@@ -15,7 +15,7 @@ Experimental, work-in-progress, unstable API.
 
 - [x] .set-or-append table
 - [x] .set-or-replace table
-- [ ] .drop table
+- [x] .drop table
 - [ ] .append table
 - [ ] .create table
 - [ ] .create-merge table
@@ -65,4 +65,4 @@ Experimental, work-in-progress, unstable API.
 - [ ] top, top-hitters
 - [ ] Kusto prefix function translator class
 - [ ] special types (datetime, timespan, dynamic)
-- [ ] recursive descent on expressions
+- [ ] parenthetical expressions

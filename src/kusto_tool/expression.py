@@ -23,24 +23,28 @@ OP = attrdict(
     NHAS="!has",
     NIN="!in",
     SUM="sum",
+    AND="and",
+    OR="or",
 )
 
 
 def quote(val):
     if isinstance(val, str):
         return f"'{val}'"
-    return val
+    return str(val)
 
 
 class UnaryExpression:
     """"""
 
-    def __init__(self, term, op):
-        self.term = term
+    def __init__(self, op, *args, agg=False):
+        self.terms = args
         self.op = op
+        self.agg = agg
 
     def __str__(self):
-        return f"{self.op}({self.term})"
+        terms = ", ".join([quote(term) for term in self.terms])
+        return f"{self.op}({terms})"
 
 
 class BinaryExpression:
@@ -54,6 +58,12 @@ class BinaryExpression:
 
     def __repr__(self):
         return f"{repr(self.lhs)} {self.op} {quote(self.rhs)}"
+
+    def __and__(self, rhs):
+        return BinaryExpression(self, OP.AND, rhs)
+
+    def __or__(self, rhs):
+        return BinaryExpression(self, OP.OR, rhs)
 
 
 class Project:
@@ -116,7 +126,10 @@ class Join:
         self.right = right
         self.on = [on] if isinstance(on, str) else on
         self.kind = kind
-        self.strategy = strategy
+        if strategy in ["broadcast", "shuffle"]:
+            self.strategy = strategy
+        else:
+            self.strategy = None
 
     def __str__(self):
         on_list = ", ".join([str(col) for col in self.on])
@@ -167,7 +180,7 @@ class Summarize:
                 key = ", ".join([str(col) for col in self.shufflekey])
                 shuffle_str = f" hint.shufflekey={key}"
             else:
-                shuffle_str = f" hint.strategy=shuffle"
+                shuffle_str = " hint.strategy=shuffle"
         partition_str = ""
         if self.shuffle and self.num_partitions:
             partition_str = f" hint.num_partitions={self.num_partitions}"
@@ -218,7 +231,7 @@ class Column:
         return BinaryExpression(self, OP.NHAS, rhs)
 
     def sum(self):
-        return UnaryExpression(self, OP.SUM)
+        return UnaryExpression(OP.SUM, self)
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'
@@ -321,9 +334,10 @@ class TableExpr:
             - "rightsemi"
             - "leftanti"
             - "rightanti"
-        Returns
-        -------
-
+        strategy: str, default None
+            If "broadcast" then a broadcast join is used.
+            If "shuffle" then a shuffle join is used.
+            If another value or None, a single-node join strategy is used.
         """
         self._ast.append(Join(right, on, kind=kind, strategy=strategy))
         return self
@@ -370,7 +384,7 @@ class TableExpr:
     def __str__(self):
         # TODO: recursively process AST
         ops = [
-            f"cluster('{self.database.server}').database('{self.database.database}').['{self.name}']",
+            f"cluster('{self.database.cluster}').database('{self.database.database}').['{self.name}']",
             *self._ast,
         ]
         query_str = "\n".join([str(op) for op in ops]) + "\n"

@@ -95,3 +95,17 @@ def test_table_where_ge(tbl):
 def test_where_repr():
     where = exp.Where(exp.BinaryExpression(exp.Column("foo", str), exp.OP.EQ, 2))
     assert repr(where) == "Where(Column(\"foo\", <class 'str'>) == 2)"
+
+
+def test_where_and():
+    foo = exp.Column("foo", str)
+    bar = exp.Column("bar", str)
+    where = exp.Where((foo == "a") & (bar == "b"))
+    assert str(where) == "| where foo == 'a' and bar == 'b'"
+
+
+def test_where_or():
+    foo = exp.Column("foo", str)
+    bar = exp.Column("bar", str)
+    where = exp.Where((foo == "a") | (bar == "b"))
+    assert str(where) == "| where foo == 'a' or bar == 'b'"

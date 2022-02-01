@@ -10,6 +10,8 @@ Welcome to kusto-tool's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   overview
+   reference
 
 
 Indices and tables

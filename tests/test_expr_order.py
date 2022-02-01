@@ -13,4 +13,12 @@ def test_order_2args():
 
 def test_order_asc():
     """order works with asc"""
-    # assert str(Order(Column("foo", str)))
+    col = Column("foo", str).asc()
+    expr = Order(col)
+    assert str(expr) == "| order by\n\tfoo asc"
+
+
+def test_order_asc_multiple():
+    """order works with asc"""
+    expr = Order(Column("foo", str).desc(), Column("bar", str).asc(), Column("baz", str).desc())
+    assert str(expr) == "| order by\n\tfoo,\n\tbar asc,\n\tbaz"

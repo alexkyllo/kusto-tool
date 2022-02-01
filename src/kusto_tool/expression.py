@@ -85,6 +85,8 @@ def typeof(expr):
         return expr.lhs.dtype
     if isinstance(expr, UnaryExpression):
         return expr.terms[0].dtype
+    if isinstance(expr, Column):
+        return expr.dtype
     return type(expr)
 
 
@@ -220,15 +222,6 @@ class Extend:
         return f"| extend\n\t{kvs}"
 
 
-class Order:
-    def __init__(self, *args):
-        self.args = args
-
-    def __str__(self):
-        args_str = ",\n\t".join([quote(arg) for arg in self.args])
-        return f"| order by\n\t{args_str}"
-
-
 class Column:
     """A column in a tabular expression."""
 
@@ -236,6 +229,7 @@ class Column:
         """"""
         self.name = name
         self.dtype = dtype
+        self._asc = False
 
     def __str__(self):
         return self.name
@@ -258,6 +252,9 @@ class Column:
     def __ge__(self, rhs):
         return BinaryExpression(OP.GE, self, rhs)
 
+    def __add__(self, rhs):
+        return BinaryExpression(OP.ADD, self, rhs)
+
     def contains(self, rhs):
         return BinaryExpression(OP.CONTAINS, self, rhs)
 
@@ -273,8 +270,34 @@ class Column:
     def sum(self):
         return UnaryExpression(OP.SUM, self)
 
+    def asc(self):
+        self._asc = True
+        return self
+
+    def desc(self):
+        self._asc = False
+        return self
+
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'
+
+
+class Order:
+    def __init__(self, *args):
+        self.args = args
+
+    def __str__(self):
+        args = []
+        for arg in self.args:
+            if isinstance(arg, Column):
+                if arg._asc:
+                    args.append(quote(arg) + " asc")
+                else:
+                    args.append(quote(arg))
+            else:
+                args.append(quote(arg))
+        args_str = ",\n\t".join(args)
+        return f"| order by\n\t{args_str}"
 
 
 class TableExpr:
@@ -329,14 +352,17 @@ class TableExpr:
         args: list
             Column names to project.
         kwargs: dict
-            Column names to project with renaming, where the key is the new name.
+            Columns to project with renaming, where the key is the new name.
+            Right hand side can be a Column or an expression.
 
         Returns
         -------
         A table expression.
         """
         self._ast.append(Project(*args, **kwargs))
-        # TODO: update column list, like with extend
+        renamed = {k: Column(k, typeof(v)) for k, v in kwargs.items()}
+        self.columns = {k: v for k, v in self.columns.items() if k in args}
+        self.columns = {**self.columns, **renamed}
         return self
 
     def collect(self):
@@ -356,7 +382,7 @@ class TableExpr:
         self._ast.append(Where(*args))
         return self
 
-    def join(self, right, on, kind, strategy=None, *args):
+    def join(self, right, on, kind, *args, strategy=None):
         """Join this table expression to another.
 
         Parameters
@@ -439,6 +465,17 @@ class TableExpr:
         new_inst = TableExpr(self.name, self.database, columns)
         new_inst._ast = self._ast
         return new_inst
+
+    def order(self, *args):
+        """Order the result set by the given columns.
+
+        Parameters
+        ----------
+        args: array
+            The columns to sort by.
+        """
+        self._ast.append(Order(*args))
+        return self
 
     def __str__(self):
         ops = [

@@ -60,7 +60,7 @@ docstring = "{{ docstring }}",
 
 
 class KustoDatabase:
-    """"""
+    """A class representing a Kusto database."""
 
     def __init__(self, cluster, database, client=None):
         """A class representing a Kusto database.
@@ -100,7 +100,8 @@ class KustoDatabase:
 
         Returns
         -------
-        TableExpr: a table expression instance.
+        TableExpr
+            A table expression instance.
         """
         return TableExpr(name, database=self, columns=columns, inspect=inspect)
 
@@ -140,8 +141,8 @@ class KustoDatabase:
 
         Returns
         -------
-        pandas.DataFrame: A DataFrame listing all tables in the database, in the
-        column "TableName".
+        pandas.DataFrame
+            A DataFrame listing all tables in the database, in the column "TableName".
         """
         return self.execute(".show tables")
 
@@ -155,8 +156,8 @@ class KustoDatabase:
 
         Returns
         -------
-        pandas.DataFrame: A DataFrame containing the name of the dropped table,
-        indicating success.
+        pandas.DataFrame
+            A DataFrame containing the name of the dropped table, indicating success.
         """
         return self.execute(f".drop table {table}")
 
@@ -170,7 +171,8 @@ class KustoDatabase:
 
         Returns
         -------
-        bool: True if the table exists in the database.
+        bool
+            True if the table exists in the database.
         """
         tables = self.show_tables()
         return table in tables.TableName.tolist()
@@ -225,7 +227,8 @@ class Cluster:
 
         Returns
         -------
-        KustoDatabase: an instance representing the Kusto database.
+        KustoDatabase
+            an instance representing the Kusto database.
         """
         return KustoDatabase(self.name, name)
 

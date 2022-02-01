@@ -45,8 +45,7 @@ Experimental, work-in-progress, unstable API.
 - [x] parenthesize or/and expressions
 - [x] extend
 - [x] order by, sort
-- [ ] asc, desc
-- [ ] update column list from project
+- [x] asc, desc
 - [ ] datatable
 - [ ] evaluate
 - [ ] facet

@@ -47,7 +47,7 @@ Experimental, work-in-progress, unstable API.
 - [x] order by, sort
 - [x] asc, desc
 - [ ] datatable
-- [ ] evaluate
+- [x] evaluate
 - [ ] facet
 - [ ] find
 - [ ] fork

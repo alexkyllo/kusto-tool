@@ -223,6 +223,15 @@ class Extend:
         return f"| extend\n\t{kvs}"
 
 
+class Property:
+    def __init__(self, column, prop):
+        self.column = column
+        self.prop = prop
+
+    def __str__(self):
+        return f"{str(self.column)}.{str(self.prop)}"
+
+
 class Column:
     """A column in a tabular expression."""
 
@@ -269,9 +278,12 @@ class Column:
         return BinaryExpression(OP.NHAS, self, rhs)
 
     def sum(self):
-        return UnaryExpression(OP.SUM, self)
+        """Aggregate the column by summation."""
+        return UnaryExpression(OP.SUM, self, agg=True)
 
     def bag_unpack(self):
+        """Expand a dynamic property bag column into one column per property."""
+        assert self.dtype in [dict, "dynamic"]
         return UnaryExpression(OP.BAG_UNPACK, self)
 
     def asc(self):
@@ -281,6 +293,12 @@ class Column:
     def desc(self):
         self._asc = False
         return self
+
+    def __getattr__(self, attr):
+        """Access a field in a dynamic property bag."""
+        if self.dtype in [dict, "dynamic"]:
+            return Property(self, attr)
+        raise AttributeError
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'

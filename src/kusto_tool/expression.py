@@ -33,6 +33,7 @@ OP = attrdict(
     SUB="-",
     MUL="*",
     DIV="/",
+    BAG_UNPACK="bag_unpack",
 )
 
 
@@ -270,6 +271,9 @@ class Column:
     def sum(self):
         return UnaryExpression(OP.SUM, self)
 
+    def bag_unpack(self):
+        return UnaryExpression(OP.BAG_UNPACK, self)
+
     def asc(self):
         self._asc = True
         return self
@@ -280,6 +284,14 @@ class Column:
 
     def __repr__(self):
         return f'Column("{self.name}", {self.dtype})'
+
+
+class Evaluate:
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __str__(self):
+        return f"| evaluate {str(self.expr)}"
 
 
 class Order:
@@ -475,6 +487,11 @@ class TableExpr:
             The columns to sort by.
         """
         self._ast.append(Order(*args))
+        return self
+
+    def evaluate(self, expr):
+        """Evaluate a Kusto plugin expression."""
+        self._ast.append(Evaluate(expr))
         return self
 
     def __str__(self):

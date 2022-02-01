@@ -22,5 +22,5 @@ def test_typeof_unary():
 
 
 def test_typeof():
-    """type of unary expression works"""
+    """type of eagerly evaluated Python expression works"""
     assert typeof("foo" + "bar") == str

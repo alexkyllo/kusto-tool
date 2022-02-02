@@ -33,6 +33,7 @@ OP = attrdict(
     SUB="-",
     MUL="*",
     DIV="/",
+    DCOUNT="dcount",
     BAG_UNPACK="bag_unpack",
 )
 
@@ -280,6 +281,9 @@ class Column:
     def sum(self):
         """Aggregate the column by summation."""
         return UnaryExpression(OP.SUM, self, agg=True)
+
+    def dcount(self, accuracy=1):
+        return UnaryExpression(OP.DCOUNT, self, accuracy, agg=True)
 
     def bag_unpack(self):
         """Expand a dynamic property bag column into one column per property."""

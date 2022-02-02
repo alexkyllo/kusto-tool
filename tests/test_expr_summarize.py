@@ -45,6 +45,13 @@ def test_summarize_sum_by():
     assert result == expected
 
 
+def test_summarize_dcount_by():
+    """summarize can use sum()"""
+    result = str(Summarize(baz=Column("bar", int).dcount(), by="foo"))
+    expected = "| summarize\n\tbaz=dcount(bar, 1)\n\tby foo"
+    assert result == expected
+
+
 def test_summarize_strategy():
     """shuffle parameter works"""
     result = str(Summarize(baz=Column("bar", int).sum(), by="foo", shuffle=True))

@@ -34,6 +34,7 @@ OP = attrdict(
     MUL="*",
     DIV="/",
     DCOUNT="dcount",
+    STRCAT="strcat",
     BAG_UNPACK="bag_unpack",
 )
 

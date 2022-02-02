@@ -1,4 +1,6 @@
 from kusto_tool.expression import Column, Summarize, TableExpr
+from kusto_tool.function import sum
+from pytest import raises
 
 from .fake_database import FakeDatabase
 
@@ -140,7 +142,7 @@ def test_tableexpr_summarize():
 
 
 def test_tableexpr_summarize_noby():
-    """TableExpr.summarize calls Summarize correctly"""
+    """TableExpr.summarize calls Summarize correctly without a by clause"""
     db = FakeDatabase("help", "Samples")
     tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
     query = tbl.summarize(sum_foo=Column("foo", str).sum())
@@ -151,5 +153,64 @@ def test_tableexpr_summarize_noby():
     expected = """cluster('help').database('Samples').['tbl']
 | summarize
 \tsum_foo=sum(foo)
+"""
+    assert result == expected
+
+
+def test_tableexpr_summarize_function():
+    """TableExpr.summarize calls Summarize correctly with the sum() function."""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = tbl.summarize(sum_foo=sum(Column("foo", str)))
+    assert "sum_foo" in query.columns
+    assert "bar" not in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tsum_foo=sum(foo)
+"""
+    assert result == expected
+
+
+def test_tableexpr_summarize_function_str():
+    """TableExpr.summarize calls Summarize correctly for a string arg."""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = tbl.summarize(sum_foo=sum("foo"))
+    assert "sum_foo" in query.columns
+    assert "bar" not in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tsum_foo=sum(foo)
+"""
+    assert result == expected
+
+
+def test_tableexpr_summarize_function_missing_col():
+    """TableExpr.summarize calls Summarize correctly"""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    with raises(AttributeError):
+        tbl.summarize(sum_foo=tbl.baz.sum())
+
+
+def test_tableexpr_summarize_function_str_missing_col():
+    """TableExpr.summarize calls Summarize correctly for a nonexisting string arg.
+    Note: This query will fail on the server side since we cannot tell if "baz"
+    is a real column in the dataset.
+    """
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = tbl.summarize(sum_baz=sum("baz"))
+    assert "sum_baz" in query.columns
+    assert "bar" not in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tsum_baz=sum(baz)
 """
     assert result == expected

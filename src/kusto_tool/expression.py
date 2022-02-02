@@ -48,9 +48,15 @@ def quote(val):
     return str(val)
 
 
-class UnaryExpression:
-    """"""
+class FunctionCall:
+    def __init__(self, name, dtype, *args, agg=False):
+        self.name = name
+        self.terms = args
+        self.agg = agg
+        self.dtype = dtype
 
+
+class UnaryExpression:
     def __init__(self, op, *args, agg=False):
         self.terms = args
         self.op = op

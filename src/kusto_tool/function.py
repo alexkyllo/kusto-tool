@@ -1,6 +1,6 @@
 from typing import Any
 
-from kusto_tool.expression import OP, Column, UnaryExpression
+from kusto_tool.expression import OP, Column, FunctionCall, UnaryExpression
 
 
 def strcat(*args):

@@ -119,3 +119,19 @@ def test_mean_column():
 \tavg_foo=avg(foo)
 """
     assert result == expected
+
+
+def test_count():
+    """avg works correctly for a column arg."""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = tbl.summarize(ct=F.count())
+    assert "ct" in query.columns
+    assert "bar" not in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tct=count()
+"""
+    assert result == expected

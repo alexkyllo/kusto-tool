@@ -49,6 +49,11 @@ def mean(expr):
     return avg(expr)
 
 
+def count():
+    """Count rows in the result set."""
+    return UnaryExpression(OP.COUNT, agg=True)
+
+
 def dcount(expr, accuracy=1):
     """Distinct count of a column.
 

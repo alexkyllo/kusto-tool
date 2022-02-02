@@ -2,6 +2,7 @@
 
 
 from copy import copy
+from typing import Any
 
 
 class attrdict:
@@ -33,6 +34,7 @@ OP = attrdict(
     SUB="-",
     MUL="*",
     DIV="/",
+    COUNT="count",
     DCOUNT="dcount",
     AVG="avg",
     STRCAT="strcat",
@@ -88,7 +90,12 @@ def typeof(expr):
     if isinstance(expr, BinaryExpression):
         return expr.lhs.dtype
     if isinstance(expr, UnaryExpression):
-        return expr.terms[0].dtype
+        # TODO: this will be wrong for functions that change dtype.
+        # Need a way to look up the return type of a function or expression.
+        if len(expr.terms) > 0:
+            return expr.terms[0].dtype
+        return Any
+
     if isinstance(expr, Column):
         return expr.dtype
     return type(expr)

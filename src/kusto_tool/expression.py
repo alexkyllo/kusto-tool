@@ -340,6 +340,14 @@ class Limit:
         return f"| limit {self.n}"
 
 
+class Expand:
+    def __init__(self, column):
+        self.column = column
+
+    def __str__(self):
+        return f"| mv-expand {str(self.column)}"
+
+
 class TableExpr:
     """A tabular expression."""
 
@@ -541,6 +549,30 @@ class TableExpr:
             The number of rows to return.
         """
         self._ast.append(Limit(n))
+        return self
+
+    def take(self, n):
+        """Limit the result set to the first n rows. Alias for .limit().
+
+        Parameters
+        ----------
+        n: int
+            The number of rows to return.
+        """
+        self._ast.append(Limit(n))
+        return self
+
+    def mv_expand(self, column):
+        """Expand a dynamic column into one row per value.
+
+        Parameters
+        ----------
+        column: Column
+            The column to expand. Must be a dynamic (or dict or array) column.
+        """
+        if isinstance(column, str):
+            column = self.columns[column]
+        self._ast.append(Expand(column))
         return self
 
     def __str__(self):

@@ -46,16 +46,17 @@ Experimental, work-in-progress, unstable API.
 - [x] extend
 - [x] order by, sort
 - [x] asc, desc
-- [ ] datatable
 - [x] evaluate
+- [x] take, limit
+- [ ] mv-apply
+- [ ] mv-expand
+- [ ] datatable
 - [ ] facet
 - [ ] find
 - [ ] fork
 - [ ] getschema
 - [ ] invoke
 - [ ] lookup
-- [ ] mv-apply
-- [ ] mv-expand
 - [ ] parse
 - [ ] partition
 - [ ] pivot
@@ -63,8 +64,7 @@ Experimental, work-in-progress, unstable API.
 - [ ] sample, sample-distinct
 - [ ] search
 - [ ] serialize
-- [ ] take, limit
 - [ ] top, top-hitters
 - [ ] Kusto prefix function translator class
 - [ ] special types (datetime, timespan, dynamic)
-
+- [ ] nice error messages when column not found in table etc.

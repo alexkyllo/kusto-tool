@@ -11,3 +11,10 @@ def test_limit_tbl():
         str(TableExpr("tbl", KustoDatabase("c", "db")).limit(1000))
         == "cluster('c').database('db').['tbl']\n| limit 1000\n"
     )
+
+
+def test_take():
+    assert (
+        str(TableExpr("tbl", KustoDatabase("c", "db")).take(1000))
+        == "cluster('c').database('db').['tbl']\n| limit 1000\n"
+    )

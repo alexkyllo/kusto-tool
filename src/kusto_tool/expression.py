@@ -331,6 +331,15 @@ class Order:
         return f"| order by\n\t{args_str}"
 
 
+class Limit:
+    def __init__(self, n):
+        assert isinstance(n, int)
+        self.n = n
+
+    def __str__(self):
+        return f"| limit {self.n}"
+
+
 class TableExpr:
     """A tabular expression."""
 
@@ -508,9 +517,30 @@ class TableExpr:
         self._ast.append(Order(*args))
         return self
 
+    def sort(self, *args):
+        """Order the result set by the given columns. Alias for .order().
+
+        Parameters
+        ----------
+        args: array
+            The columns to sort by.
+        """
+        return self.order(*args)
+
     def evaluate(self, expr):
         """Evaluate a Kusto plugin expression."""
         self._ast.append(Evaluate(expr))
+        return self
+
+    def limit(self, n):
+        """Limit the result set to the first n rows.
+
+        Parameters
+        ----------
+        n: int
+            The number of rows to return.
+        """
+        self._ast.append(Limit(n))
         return self
 
     def __str__(self):

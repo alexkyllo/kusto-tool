@@ -40,3 +40,11 @@ def test_order_tbl_asc():
         str(tbl.order(tbl.foo.asc()))
         == "cluster('cluster').database('db').['tbl']\n| order by\n\tfoo asc\n"
     )
+
+
+def test_sort_tbl():
+    """sort alias works works with a table"""
+    tbl = TableExpr("tbl", KustoDatabase("cluster", "db"), columns={"foo": str})
+    assert (
+        str(tbl.sort(tbl.foo)) == "cluster('cluster').database('db').['tbl']\n| order by\n\tfoo\n"
+    )

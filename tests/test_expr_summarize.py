@@ -1,5 +1,5 @@
 from kusto_tool.expression import Column, Summarize, TableExpr
-from kusto_tool.function import sum
+from kusto_tool.function import strcat, sum
 from pytest import raises
 
 from .fake_database import FakeDatabase
@@ -44,6 +44,15 @@ def test_summarize_sum_by():
     """summarize can use sum()"""
     result = str(Summarize(baz=Column("bar", int).sum(), by="foo"))
     expected = "| summarize\n\tbaz=sum(bar)\n\tby foo"
+    assert result == expected
+
+
+def test_summarize_sum_two_cols():
+    """Summarize can work with two columns"""
+    result = str(
+        Summarize(baz=Column("bar", int).sum(), quux=Column("bar", int).dcount(), by="foo")
+    )
+    expected = "| summarize\n\tbaz=sum(bar),\n\tquux=dcount(bar, 1)\n\tby foo"
     assert result == expected
 
 
@@ -214,3 +223,10 @@ def test_tableexpr_summarize_function_str_missing_col():
 \tsum_baz=sum(baz)
 """
     assert result == expected
+
+
+def test_summarize_nonagg_fails():
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    with raises(AssertionError):
+        tbl.summarize(sum_foo=strcat(Column("foo", str)))

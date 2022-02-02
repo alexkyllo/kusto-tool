@@ -34,6 +34,7 @@ OP = attrdict(
     MUL="*",
     DIV="/",
     DCOUNT="dcount",
+    AVG="avg",
     STRCAT="strcat",
     BAG_UNPACK="bag_unpack",
 )
@@ -169,6 +170,9 @@ class Join:
 
 class Summarize:
     def __init__(self, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs):
+        # expressions in summarize must be aggregate functions.
+        for _, v in kwargs.items():
+            assert v.agg
         self.expressions = kwargs
         if by is None:
             self.by = []
@@ -191,7 +195,10 @@ class Summarize:
 
     def __str__(self):
         if self.expressions:
-            expr_list = ",".join([f"{str(k)}={str(v)}" for k, v in self.expressions.items()])
+            expr_list = []
+            for k, v in self.expressions.items():
+                expr_list.append(f"{str(k)}={str(v)}")
+            expr_list = ",\n\t".join(expr_list)
             expr_list = f"\n\t{expr_list}"
         else:
             expr_list = ""
@@ -279,6 +286,14 @@ class Column:
     def sum(self):
         """Aggregate the column by summation."""
         return UnaryExpression(OP.SUM, self, agg=True)
+
+    def avg(self):
+        """Aggregate the column by averaging (arithmetic mean)."""
+        return UnaryExpression(OP.AVG, self, agg=True)
+
+    def mean(self):
+        """Aggregate the column by averaging (arithmetic mean). Alias for avg."""
+        return self.avg()
 
     def dcount(self, accuracy=1):
         return UnaryExpression(OP.DCOUNT, self, accuracy, agg=True)

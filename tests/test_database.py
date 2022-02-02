@@ -115,7 +115,9 @@ def test_tableexpr_project():
     db = kdb.KustoDatabase("test", "testdb")
     tbl = db.table("tbl", columns={"foo": str, "bar": int})
     query = str(tbl.project(tbl.foo, tbl.bar, baz=tbl.bar))
-    expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar,\nbaz = bar\n"
+    expected = (
+        "cluster('test').database('testdb').['tbl']\n| project\n\tfoo,\n\tbar,\n\tbaz = bar\n"
+    )
     assert query == expected
 
 
@@ -123,7 +125,9 @@ def test_collect():
     db = FakeDatabase("test", "testdb")
     tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
     query = tbl.project(tbl.foo, tbl.bar, baz=tbl.bar).collect()
-    expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar,\nbaz = bar\n"
+    expected = (
+        "cluster('test').database('testdb').['tbl']\n| project\n\tfoo,\n\tbar,\n\tbaz = bar\n"
+    )
     assert query == expected
 
 
@@ -131,7 +135,7 @@ def test_count():
     db = FakeDatabase("test", "testdb")
     tbl = kdb.TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
     query = str(tbl.project(tbl.foo, tbl.bar).count())
-    expected = "cluster('test').database('testdb').['tbl']\n| project foo,\nbar\n| count\n"
+    expected = "cluster('test').database('testdb').['tbl']\n| project\n\tfoo,\n\tbar\n| count\n"
     assert query == expected
 
 
@@ -176,3 +180,30 @@ def test_extend():
     assert "bar" in tbl_2.columns
     assert "bar" not in tbl.columns
     assert query == expected
+
+
+def test_long_query():
+    tbl = (
+        kdb.cluster("help")
+        .database("Samples")
+        .table("StormEvents", columns={"State": str, "EventType": str, "DamageProperty": int})
+    )
+    query = (
+        tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty)
+        .summarize(sum_damage=tbl.DamageProperty.sum(), by=[tbl.State, tbl.EventType])
+        .sort(tbl.sum_damage)
+        .limit(20)
+    )
+    expected = """cluster('help').database('Samples').['StormEvents']
+| project
+\tState,
+\tEventType,
+\tDamageProperty
+| summarize
+\tsum_damage=sum(DamageProperty)
+\tby State, EventType
+| order by
+\tsum_damage
+| limit 20
+"""
+    assert str(query) == expected

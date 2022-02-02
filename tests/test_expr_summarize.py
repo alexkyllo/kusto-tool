@@ -126,10 +126,30 @@ def test_tableexpr_summarize():
     """TableExpr.summarize calls Summarize correctly"""
     db = FakeDatabase("help", "Samples")
     tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
-    result = str(tbl.summarize(sum_foo=Column("foo", str).sum(), by="bar"))
+    query = tbl.summarize(sum_foo=Column("foo", str).sum(), by="bar")
+    assert "sum_foo" in query.columns
+    assert "bar" in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
     expected = """cluster('help').database('Samples').['tbl']
 | summarize
 \tsum_foo=sum(foo)
 \tby bar
+"""
+    assert result == expected
+
+
+def test_tableexpr_summarize_noby():
+    """TableExpr.summarize calls Summarize correctly"""
+    db = FakeDatabase("help", "Samples")
+    tbl = TableExpr("tbl", database=db, columns={"foo": str, "bar": int})
+    query = tbl.summarize(sum_foo=Column("foo", str).sum())
+    assert "sum_foo" in query.columns
+    assert "bar" not in query.columns
+    assert "foo" not in query.columns
+    result = str(query)
+    expected = """cluster('help').database('Samples').['tbl']
+| summarize
+\tsum_foo=sum(foo)
 """
     assert result == expected

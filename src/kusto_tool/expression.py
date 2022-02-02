@@ -101,12 +101,12 @@ class Project:
         col_list = self.columns
         for k, v in self.renamed_columns.items():
             col_list.append(f"{k} = {v}")
-        col_str = ",\n".join([str(col) for col in col_list])
+        col_str = ",\n\t".join([str(col) for col in col_list])
         return col_str
 
     def __str__(self):
         column_list = self._build_column_list()
-        return f"| project {column_list}"
+        return f"| project\n\t{column_list}"
 
 
 class Count:
@@ -167,11 +167,8 @@ class Join:
 
 
 class Summarize:
-    def __init__(
-        self, *args, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs
-    ):
-        converted_args = {f"{str(v.op)}_{str(v.term)}": v for v in args}
-        self.expressions = {**converted_args, **kwargs}
+    def __init__(self, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs):
+        self.expressions = kwargs
         if by is None:
             self.by = []
         elif isinstance(by, (str, Column)):
@@ -457,15 +454,11 @@ class TableExpr:
         self._ast.append(Join(right, on, kind=kind, strategy=strategy))
         return self
 
-    def summarize(
-        self, *args, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs
-    ):
+    def summarize(self, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs):
         """Aggregate by columns.
 
         Parameters
         ----------
-        args: list
-            Un-aliased expressions, e.g. foo.sum().
         by: list, default None
             List of Column instances or column name strings to group by.
         shuffle: bool, default False
@@ -482,11 +475,25 @@ class TableExpr:
             shuffle strategy. Has no effect unless `shuffle` or `shufflekey` is
             also provided.
         kwargs: Dict
-            Aliased expressions, e.g. bar=foo.sum()
+            Aliased aggregation expressions, e.g. bar=foo.sum()
         """
+        # Set table columns to those listed in by, args, kwargs
+        if by is None:
+            by = []
+        elif isinstance(by, (str, Column)):
+            by = [by]
+        else:
+            by = by
+        by_cols = {}
+        for col in by:
+            if isinstance(col, str):
+                col = self.columns[col]
+            by_cols[col.name] = col
+
+        kwarg_cols = {k: Column(k, typeof(v)) for k, v in kwargs.items()}
+        self.columns = {**by_cols, **kwarg_cols}
         self._ast.append(
             Summarize(
-                *args,
                 by=by,
                 shuffle=shuffle,
                 shufflekey=shufflekey,

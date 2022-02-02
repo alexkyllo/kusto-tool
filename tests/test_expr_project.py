@@ -9,7 +9,7 @@ def test_project_rename_col():
     assert expr.columns["bar"].dtype == int
     assert "foo" not in expr.columns
     query = str(expr)
-    expected = "cluster('test').database('testdb').['tbl']\n| project bar = foo\n"
+    expected = "cluster('test').database('testdb').['tbl']\n| project\n\tbar = foo\n"
     assert query == expected
 
 
@@ -19,7 +19,7 @@ def test_project_math_expr():
     assert expr.columns["bar"].dtype == int
     assert "foo" not in expr.columns
     query = str(expr)
-    expected = "cluster('test').database('testdb').['tbl']\n| project bar = foo + 1\n"
+    expected = "cluster('test').database('testdb').['tbl']\n| project\n\tbar = foo + 1\n"
     assert query == expected
 
 
@@ -28,7 +28,7 @@ def test_property_access_table():
     tbl = TableExpr("tbl", KustoDatabase("test", "testdb"), columns={"foo": dict})
     expr = tbl.project(bar=tbl.foo.baz)
     query = str(expr)
-    assert query == "cluster('test').database('testdb').['tbl']\n| project bar = foo.baz\n"
+    assert query == "cluster('test').database('testdb').['tbl']\n| project\n\tbar = foo.baz\n"
 
 
 def test_property_access():

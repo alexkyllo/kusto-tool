@@ -323,11 +323,8 @@ class Order:
     def __str__(self):
         args = []
         for arg in self.args:
-            if isinstance(arg, Column):
-                if arg._asc:
-                    args.append(quote(arg) + " asc")
-                else:
-                    args.append(quote(arg))
+            if isinstance(arg, Column) and arg._asc:
+                args.append(quote(arg) + " asc")
             else:
                 args.append(quote(arg))
         args_str = ",\n\t".join(args)

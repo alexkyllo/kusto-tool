@@ -1,4 +1,5 @@
-from kusto_tool.expression import Column, Order
+from kusto_tool.database import KustoDatabase
+from kusto_tool.expression import Column, Order, TableExpr
 
 
 def test_order_1arg():
@@ -22,3 +23,20 @@ def test_order_asc_multiple():
     """order works with asc"""
     expr = Order(Column("foo", str).desc(), Column("bar", str).asc(), Column("baz", str).desc())
     assert str(expr) == "| order by\n\tfoo,\n\tbar asc,\n\tbaz"
+
+
+def test_order_tbl():
+    """order by works with a table"""
+    tbl = TableExpr("tbl", KustoDatabase("cluster", "db"), columns={"foo": str})
+    assert (
+        str(tbl.order(tbl.foo)) == "cluster('cluster').database('db').['tbl']\n| order by\n\tfoo\n"
+    )
+
+
+def test_order_tbl_asc():
+    """order by works with a table"""
+    tbl = TableExpr("tbl", KustoDatabase("cluster", "db"), columns={"foo": str})
+    assert (
+        str(tbl.order(tbl.foo.asc()))
+        == "cluster('cluster').database('db').['tbl']\n| order by\n\tfoo asc\n"
+    )

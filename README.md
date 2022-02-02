@@ -48,8 +48,9 @@ Experimental, work-in-progress, unstable API.
 - [x] asc, desc
 - [x] evaluate
 - [x] take, limit
+- [x] mv-expand
+- [ ] Inspect columns from table by querying in the background
 - [ ] mv-apply
-- [ ] mv-expand
 - [ ] datatable
 - [ ] facet
 - [ ] find

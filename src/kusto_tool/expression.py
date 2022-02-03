@@ -42,7 +42,7 @@ OP = attrdict(
     BAG_UNPACK="bag_unpack",
 )
 
-TYPES = {
+PTYPES = {
     bool: "bool",
     datetime: "datetime",
     Decimal: "decimal",
@@ -53,6 +53,18 @@ TYPES = {
     str: "string",
     timedelta: "timespan",
     tuple: "dynamic",
+}
+
+KTYPES = {
+    "bool": bool,
+    "datetime": datetime,
+    "decimal": Decimal,
+    "dynamic": dict,
+    "int": int,
+    "long": int,
+    "real": float,
+    "string": str,
+    "timespan": timedelta,
 }
 
 

@@ -8,7 +8,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.helpers import dataframe_from_result_table
 from loguru import logger
 
-from kusto_tool.expression import TableExpr
+from kusto_tool.expression import KTYPES, TableExpr
 
 
 def list_to_kusto(lst):
@@ -103,6 +103,11 @@ class KustoDatabase:
         TableExpr
             A table expression instance.
         """
+        if inspect:
+            columns = self.execute(f".show table {name} cslschema").Schema.item()
+            breakpoint()
+            columns = columns.split(",")
+            columns = {col.split(":")[0]: KTYPES[col.split(":")[1]] for col in columns}
         return TableExpr(name, database=self, columns=columns, inspect=inspect)
 
     def execute(self, query: str, *args, **kwargs):

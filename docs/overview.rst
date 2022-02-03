@@ -13,7 +13,7 @@ Kusto Query Language (KQL)'s pipe-based query structure.
     tbl = (
         kdb.cluster("help")
         .database("Samples")
-        .table("StormEvents", columns={"State": str, "EventType": str, "DamageProperty": int})
+        .table("StormEvents", inspect=True) # queries the database for column list
     )
     query = (
         tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty)

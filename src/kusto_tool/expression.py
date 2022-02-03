@@ -1,7 +1,8 @@
 """Experimental Kusto expression API for generating queries."""
 
-
 from copy import copy
+from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 
@@ -41,6 +42,19 @@ OP = attrdict(
     BAG_UNPACK="bag_unpack",
 )
 
+TYPES = {
+    bool: "bool",
+    datetime: "datetime",
+    Decimal: "decimal",
+    dict: "dynamic",
+    float: "real",
+    int: "long",
+    list: "dynamic",
+    str: "string",
+    timedelta: "timespan",
+    tuple: "dynamic",
+}
+
 
 def quote(val):
     if isinstance(val, str):
@@ -48,16 +62,8 @@ def quote(val):
     return str(val)
 
 
-class FunctionCall:
-    def __init__(self, name, dtype, *args, agg=False):
-        self.name = name
-        self.terms = args
-        self.agg = agg
-        self.dtype = dtype
-
-
-class UnaryExpression:
-    def __init__(self, op, *args, agg=False):
+class Prefix:
+    def __init__(self, op, *args, agg=False, type=Any):
         self.terms = args
         self.op = op
         self.agg = agg
@@ -67,11 +73,12 @@ class UnaryExpression:
         return f"{self.op}({terms})"
 
 
-class BinaryExpression:
-    def __init__(self, op, lhs, rhs):
+class Infix:
+    def __init__(self, op, lhs, rhs, type=Any):
         self.op = op
         self.lhs = lhs
         self.rhs = rhs
+        self.type = type
 
     def __str__(self):
         if self.op in [OP.AND, OP.OR]:
@@ -82,20 +89,20 @@ class BinaryExpression:
         return f"{repr(self.lhs)} {self.op} {quote(self.rhs)}"
 
     def __and__(self, rhs):
-        return BinaryExpression(OP.AND, self, rhs)
+        return Infix(OP.AND, self, rhs)
 
     def __or__(self, rhs):
-        return BinaryExpression(OP.OR, self, rhs)
+        return Infix(OP.OR, self, rhs)
 
     def __invert__(self):
-        return UnaryExpression(OP.NOT, self)
+        return Prefix(OP.NOT, self)
 
 
 def typeof(expr):
     """Get the type of an expression."""
-    if isinstance(expr, BinaryExpression):
+    if isinstance(expr, Infix):
         return expr.lhs.dtype
-    if isinstance(expr, UnaryExpression):
+    if isinstance(expr, Prefix):
         # TODO: this will be wrong for functions that change dtype.
         # Need a way to look up the return type of a function or expression.
         if len(expr.terms) > 0:
@@ -264,57 +271,57 @@ class Column:
         return self.name
 
     def __eq__(self, rhs):
-        return BinaryExpression(OP.EQ, self, rhs)
+        return Infix(OP.EQ, self, rhs)
 
     def __ne__(self, rhs):
-        return BinaryExpression(OP.NE, self, rhs)
+        return Infix(OP.NE, self, rhs)
 
     def __lt__(self, rhs):
-        return BinaryExpression(OP.LT, self, rhs)
+        return Infix(OP.LT, self, rhs)
 
     def __le__(self, rhs):
-        return BinaryExpression(OP.LE, self, rhs)
+        return Infix(OP.LE, self, rhs)
 
     def __gt__(self, rhs):
-        return BinaryExpression(OP.GT, self, rhs)
+        return Infix(OP.GT, self, rhs)
 
     def __ge__(self, rhs):
-        return BinaryExpression(OP.GE, self, rhs)
+        return Infix(OP.GE, self, rhs)
 
     def __add__(self, rhs):
-        return BinaryExpression(OP.ADD, self, rhs)
+        return Infix(OP.ADD, self, rhs)
 
     def contains(self, rhs):
-        return BinaryExpression(OP.CONTAINS, self, rhs)
+        return Infix(OP.CONTAINS, self, rhs)
 
     def ncontains(self, rhs):
-        return BinaryExpression(OP.NCONTAINS, self, rhs)
+        return Infix(OP.NCONTAINS, self, rhs)
 
     def has(self, rhs):
-        return BinaryExpression(OP.HAS, self, rhs)
+        return Infix(OP.HAS, self, rhs)
 
     def nhas(self, rhs):
-        return BinaryExpression(OP.NHAS, self, rhs)
+        return Infix(OP.NHAS, self, rhs)
 
     def sum(self):
         """Aggregate the column by summation."""
-        return UnaryExpression(OP.SUM, self, agg=True)
+        return Prefix(OP.SUM, self, agg=True)
 
     def avg(self):
         """Aggregate the column by averaging (arithmetic mean)."""
-        return UnaryExpression(OP.AVG, self, agg=True)
+        return Prefix(OP.AVG, self, agg=True)
 
     def mean(self):
         """Aggregate the column by averaging (arithmetic mean). Alias for avg."""
         return self.avg()
 
     def dcount(self, accuracy=1):
-        return UnaryExpression(OP.DCOUNT, self, accuracy, agg=True)
+        return Prefix(OP.DCOUNT, self, accuracy, agg=True)
 
     def bag_unpack(self):
         """Expand a dynamic property bag column into one column per property."""
         assert self.dtype in [dict, "dynamic"]
-        return UnaryExpression(OP.BAG_UNPACK, self)
+        return Prefix(OP.BAG_UNPACK, self)
 
     def asc(self):
         self._asc = True

@@ -1,6 +1,6 @@
 from typing import Any
 
-from kusto_tool.expression import OP, Column, FunctionCall, UnaryExpression
+from kusto_tool.expression import OP, Column, Prefix
 
 
 def strcat(*args):
@@ -11,7 +11,7 @@ def strcat(*args):
     args: list
         List of string Columns and/or scalar strings to concatenate.
     """
-    return UnaryExpression(OP.STRCAT, *args)
+    return Prefix(OP.STRCAT, *args)
 
 
 def sum(expr):
@@ -24,7 +24,7 @@ def sum(expr):
     # if sum gets a string, it's referring to a Column in the TableExpr.
     if isinstance(expr, str):
         expr = Column(expr, Any)
-    return UnaryExpression(OP.SUM, expr, agg=True)
+    return Prefix(OP.SUM, expr, agg=True)
 
 
 def avg(expr):
@@ -36,7 +36,7 @@ def avg(expr):
     """
     if isinstance(expr, str):
         expr = Column(expr, Any)
-    return UnaryExpression(OP.AVG, expr, agg=True)
+    return Prefix(OP.AVG, expr, agg=True)
 
 
 def mean(expr):
@@ -51,7 +51,7 @@ def mean(expr):
 
 def count():
     """Count rows in the result set."""
-    return UnaryExpression(OP.COUNT, agg=True)
+    return Prefix(OP.COUNT, agg=True)
 
 
 def dcount(expr, accuracy=1):
@@ -67,4 +67,4 @@ def dcount(expr, accuracy=1):
     """
     if isinstance(expr, str):
         expr = Column(expr, Any)
-    return UnaryExpression(OP.DCOUNT, expr, accuracy, agg=True)
+    return Prefix(OP.DCOUNT, expr, accuracy, agg=True)

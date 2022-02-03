@@ -1,4 +1,4 @@
-from kusto_tool.expression import OP, BinaryExpression, Column, Extend, UnaryExpression, typeof
+from kusto_tool.expression import OP, Column, Extend, Infix, Prefix, typeof
 
 
 def test_extend():
@@ -13,12 +13,12 @@ def test_extend_two():
 
 def test_typeof_bin():
     """type of binary expression works"""
-    assert typeof(BinaryExpression(OP.ADD, Column("foo", int), 1)) == int
+    assert typeof(Infix(OP.ADD, Column("foo", int), 1)) == int
 
 
 def test_typeof_unary():
     """type of unary expression works"""
-    assert typeof(UnaryExpression(OP.NOT, Column("foo", int))) == int
+    assert typeof(Prefix(OP.NOT, Column("foo", int))) == int
 
 
 def test_typeof():

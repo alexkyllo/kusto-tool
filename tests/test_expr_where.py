@@ -15,43 +15,43 @@ def tbl(db):
 
 
 def test_where_eq_str():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.EQ, exp.Column("foo", str), "a")))
+    actual = str(exp.Where(exp.Infix(exp.OP.EQ, exp.Column("foo", str), "a")))
     expected = "| where foo == 'a'"
     assert actual == expected
 
 
 def test_where_eq_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.EQ, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.EQ, exp.Column("foo", str), 2)))
     expected = "| where foo == 2"
     assert actual == expected
 
 
 def test_where_ne_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.NE, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.NE, exp.Column("foo", str), 2)))
     expected = "| where foo != 2"
     assert actual == expected
 
 
 def test_where_lt_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.LT, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.LT, exp.Column("foo", str), 2)))
     expected = "| where foo < 2"
     assert actual == expected
 
 
 def test_where_lte_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.LE, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.LE, exp.Column("foo", str), 2)))
     expected = "| where foo <= 2"
     assert actual == expected
 
 
 def test_where_gt_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.GT, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.GT, exp.Column("foo", str), 2)))
     expected = "| where foo > 2"
     assert actual == expected
 
 
 def test_where_gte_int():
-    actual = str(exp.Where(exp.BinaryExpression(exp.OP.GE, exp.Column("foo", str), 2)))
+    actual = str(exp.Where(exp.Infix(exp.OP.GE, exp.Column("foo", str), 2)))
     expected = "| where foo >= 2"
     assert actual == expected
 
@@ -93,7 +93,7 @@ def test_table_where_ge(tbl):
 
 
 def test_where_repr():
-    where = exp.Where(exp.BinaryExpression(exp.OP.EQ, exp.Column("foo", str), 2))
+    where = exp.Where(exp.Infix(exp.OP.EQ, exp.Column("foo", str), 2))
     assert repr(where) == "Where(Column(\"foo\", <class 'str'>) == 2)"
 
 

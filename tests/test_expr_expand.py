@@ -1,5 +1,5 @@
 from kusto_tool.database import KustoDatabase
-from kusto_tool.expression import Column, Expand, TableExpr
+from kusto_tool.expression import TableExpr
 from pytest import raises
 
 

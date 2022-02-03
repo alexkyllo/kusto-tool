@@ -49,7 +49,7 @@ Experimental, work-in-progress, unstable API.
 - [x] evaluate
 - [x] take, limit
 - [x] mv-expand
-- [x] Inspect columns from table by querying in the background
+- [x] Inspect columns from table by querying
 - [ ] mv-apply
 - [ ] datatable
 - [ ] facet
@@ -69,3 +69,21 @@ Experimental, work-in-progress, unstable API.
 - [ ] Kusto prefix function translator class
 - [ ] special types (datetime, timespan, dynamic)
 - [ ] nice error messages when column not found in table etc.
+
+### Agg functions
+
+- [ ] sumif
+- [ ] countif
+- [ ] dcountif
+- [ ] binary_all_and
+- [ ] binary_all_or
+- [ ] binary_all_xor
+- [ ] make_bag / make_set / make_list
+- [ ] arg_max, arg_min, take_any, take_anyif
+- [ ] avgif
+- [ ] hll, hll_merge
+- [ ] max, maxif, min, minif
+- [ ] percentiles, percentiles_array, percentilesw
+- [ ] stdev, stdevif
+- [ ] tdigest, tdigest_merge
+- [ ] variance, variancep, varianceif

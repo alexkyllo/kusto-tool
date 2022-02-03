@@ -122,3 +122,15 @@ def test_where_cols():
     bar = exp.Column("bar", str)
     where = exp.Where(foo == bar)
     assert str(where) == "| where foo == bar"
+
+
+def test_where_isin():
+    foo = exp.Column("foo", str)
+    where = exp.Where(foo.isin("bar", "baz"))
+    assert str(where) == "| where foo in ('bar', 'baz')"
+
+
+def test_where_isin_int():
+    foo = exp.Column("foo", str)
+    where = exp.Where(foo.isin(1, 2, 3))
+    assert str(where) == "| where foo in (1, 2, 3)"

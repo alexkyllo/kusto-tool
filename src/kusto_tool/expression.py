@@ -63,10 +63,11 @@ def quote(val):
 
 
 class Prefix:
-    def __init__(self, op, *args, agg=False, type=Any):
+    def __init__(self, op, *args, agg=False, dtype=Any):
         self.terms = args
         self.op = op
         self.agg = agg
+        self.dtype = dtype
 
     def __str__(self):
         terms = ", ".join([quote(term) for term in self.terms])
@@ -74,11 +75,12 @@ class Prefix:
 
 
 class Infix:
-    def __init__(self, op, lhs, rhs, type=Any):
+    # TODO: does this need __add__, __sub__?
+    def __init__(self, op, lhs, rhs, dtype=Any):
         self.op = op
         self.lhs = lhs
         self.rhs = rhs
-        self.type = type
+        self.dtype = dtype
 
     def __str__(self):
         if self.op in [OP.AND, OP.OR]:
@@ -89,27 +91,18 @@ class Infix:
         return f"{repr(self.lhs)} {self.op} {quote(self.rhs)}"
 
     def __and__(self, rhs):
-        return Infix(OP.AND, self, rhs)
+        return Infix(OP.AND, self, rhs, dtype=bool)
 
     def __or__(self, rhs):
-        return Infix(OP.OR, self, rhs)
+        return Infix(OP.OR, self, rhs, dtype=bool)
 
     def __invert__(self):
-        return Prefix(OP.NOT, self)
+        return Prefix(OP.NOT, self, dtype=bool)
 
 
 def typeof(expr):
     """Get the type of an expression."""
-    if isinstance(expr, Infix):
-        return expr.lhs.dtype
-    if isinstance(expr, Prefix):
-        # TODO: this will be wrong for functions that change dtype.
-        # Need a way to look up the return type of a function or expression.
-        if len(expr.terms) > 0:
-            return expr.terms[0].dtype
-        return Any
-
-    if isinstance(expr, Column):
+    if isinstance(expr, (Infix, Prefix, Column)):
         return expr.dtype
     return type(expr)
 
@@ -258,6 +251,15 @@ class Property:
         return f"{str(self.column)}.{str(self.prop)}"
 
 
+class ListLit:
+    def __init__(self, *args):
+        self.args = list(args)
+
+    def __str__(self):
+        in_list = f"({', '.join([quote(arg) for arg in self.args])})"
+        return in_list
+
+
 class Column:
     """A column in a tabular expression."""
 
@@ -270,53 +272,73 @@ class Column:
     def __str__(self):
         return self.name
 
+    def __invert__(self):
+        return Prefix(OP.NOT, self, dtype=bool)
+
     def __eq__(self, rhs):
-        return Infix(OP.EQ, self, rhs)
+        return Infix(OP.EQ, self, rhs, dtype=bool)
 
     def __ne__(self, rhs):
-        return Infix(OP.NE, self, rhs)
+        return Infix(OP.NE, self, rhs, dtype=bool)
 
     def __lt__(self, rhs):
-        return Infix(OP.LT, self, rhs)
+        return Infix(OP.LT, self, rhs, dtype=bool)
 
     def __le__(self, rhs):
-        return Infix(OP.LE, self, rhs)
+        return Infix(OP.LE, self, rhs, dtype=bool)
 
     def __gt__(self, rhs):
-        return Infix(OP.GT, self, rhs)
+        return Infix(OP.GT, self, rhs, dtype=bool)
 
     def __ge__(self, rhs):
-        return Infix(OP.GE, self, rhs)
+        return Infix(OP.GE, self, rhs, dtype=bool)
 
     def __add__(self, rhs):
-        return Infix(OP.ADD, self, rhs)
+        dtype = int if typeof(self) == typeof(rhs) == int else float
+        return Infix(OP.ADD, self, rhs, dtype=dtype)
+
+    def __sub__(self, rhs):
+        dtype = int if typeof(self) == typeof(rhs) == int else float
+        return Infix(OP.ADD, self, rhs, dtype=dtype)
+
+    def __mul__(self, rhs):
+        dtype = int if typeof(self) == typeof(rhs) == int else float
+        return Infix(OP.ADD, self, rhs, dtype=dtype)
+
+    def __truediv__(self, rhs):
+        dtype = int if typeof(self) == typeof(rhs) == int else float
+        return Infix(OP.ADD, self, rhs, dtype=dtype)
 
     def contains(self, rhs):
-        return Infix(OP.CONTAINS, self, rhs)
+        return Infix(OP.CONTAINS, self, rhs, dtype=bool)
 
     def ncontains(self, rhs):
-        return Infix(OP.NCONTAINS, self, rhs)
+        return Infix(OP.NCONTAINS, self, rhs, dtype=bool)
 
     def has(self, rhs):
-        return Infix(OP.HAS, self, rhs)
+        return Infix(OP.HAS, self, rhs, dtype=bool)
 
     def nhas(self, rhs):
-        return Infix(OP.NHAS, self, rhs)
+        return Infix(OP.NHAS, self, rhs, dtype=bool)
+
+    def isin(self, *args):
+        in_list = ListLit(*args)
+        return Infix(OP.IN, self, in_list, dtype=bool)
 
     def sum(self):
         """Aggregate the column by summation."""
-        return Prefix(OP.SUM, self, agg=True)
+        return Prefix(OP.SUM, self, agg=True, dtype=self.dtype)
 
     def avg(self):
         """Aggregate the column by averaging (arithmetic mean)."""
-        return Prefix(OP.AVG, self, agg=True)
+        return Prefix(OP.AVG, self, agg=True, dtype=float)
 
     def mean(self):
         """Aggregate the column by averaging (arithmetic mean). Alias for avg."""
         return self.avg()
 
     def dcount(self, accuracy=1):
-        return Prefix(OP.DCOUNT, self, accuracy, agg=True)
+        return Prefix(OP.DCOUNT, self, accuracy, agg=True, dtype=int)
 
     def bag_unpack(self):
         """Expand a dynamic property bag column into one column per property."""

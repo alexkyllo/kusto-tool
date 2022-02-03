@@ -11,7 +11,7 @@ def strcat(*args):
     args: list
         List of string Columns and/or scalar strings to concatenate.
     """
-    return Prefix(OP.STRCAT, *args)
+    return Prefix(OP.STRCAT, *args, dtype=str)
 
 
 def sum(expr):
@@ -23,8 +23,8 @@ def sum(expr):
     """
     # if sum gets a string, it's referring to a Column in the TableExpr.
     if isinstance(expr, str):
-        expr = Column(expr, Any)
-    return Prefix(OP.SUM, expr, agg=True)
+        expr = Column(expr, float)
+    return Prefix(OP.SUM, expr, agg=True, dtype=float)
 
 
 def avg(expr):
@@ -35,8 +35,8 @@ def avg(expr):
     expr: str, Column or expression.
     """
     if isinstance(expr, str):
-        expr = Column(expr, Any)
-    return Prefix(OP.AVG, expr, agg=True)
+        expr = Column(expr, float)
+    return Prefix(OP.AVG, expr, agg=True, dtype=float)
 
 
 def mean(expr):
@@ -51,7 +51,7 @@ def mean(expr):
 
 def count():
     """Count rows in the result set."""
-    return Prefix(OP.COUNT, agg=True)
+    return Prefix(OP.COUNT, agg=True, dtype=int)
 
 
 def dcount(expr, accuracy=1):
@@ -67,4 +67,4 @@ def dcount(expr, accuracy=1):
     """
     if isinstance(expr, str):
         expr = Column(expr, Any)
-    return Prefix(OP.DCOUNT, expr, accuracy, agg=True)
+    return Prefix(OP.DCOUNT, expr, accuracy, agg=True, dtype=int)

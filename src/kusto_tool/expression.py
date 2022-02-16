@@ -7,6 +7,8 @@ from typing import Any
 
 
 class attrdict:
+    """A dict whose members are accessible with the . operator."""
+
     def __init__(self, **kwargs):
         self._dict = kwargs
 
@@ -28,6 +30,8 @@ OP = attrdict(
     NHAS="!has",
     NIN="!in",
     SUM="sum",
+    MIN="min",
+    MAX="max",
     AND="and",
     OR="or",
     NOT="not",
@@ -40,6 +44,7 @@ OP = attrdict(
     AVG="avg",
     STRCAT="strcat",
     BAG_UNPACK="bag_unpack",
+    PERCENTILE="percentile",
 )
 
 PTYPES = {
@@ -69,6 +74,7 @@ KTYPES = {
 
 
 def quote(val):
+    """Quote strings."""
     if isinstance(val, str):
         return f"'{val}'"
     return str(val)
@@ -142,6 +148,33 @@ class Count:
 
     def __str__(self):
         return "| count"
+
+
+class Sample:
+    """Sample operator."""
+
+    def __init__(self, n):
+        self.n = n
+
+    def __repr__(self):
+        return f"Sample({self.n})"
+
+    def __str__(self):
+        return f"| sample {self.n}"
+
+
+class SampleDistinct:
+    """Sample distinct operator."""
+
+    def __init__(self, n, of):
+        self.n = n
+        self.of = of
+
+    def __repr__(self):
+        return f"Sample({self.n} of {self.of})"
+
+    def __str__(self):
+        return f"| sample {self.n} of {self.of}"
 
 
 class Distinct:
@@ -345,9 +378,21 @@ class Column:
         """Aggregate the column by averaging (arithmetic mean)."""
         return Prefix(OP.AVG, self, agg=True, dtype=float)
 
+    def min(self):
+        """Aggregate the column by taking the minimum value."""
+        return Prefix(OP.MIN, self, agg=True, dtype=float)
+
+    def max(self):
+        """Aggregate the column by taking the maximum value."""
+        return Prefix(OP.MAX, self, agg=True, dtype=float)
+
     def mean(self):
         """Aggregate the column by averaging (arithmetic mean). Alias for avg."""
         return self.avg()
+
+    def percentile(self, *args):
+        """Aggregate the column by calculating one or more percentiles."""
+        return Prefix(OP.PERCENTILE, self, *args, agg=True, dtype=float)
 
     def dcount(self, accuracy=1):
         return Prefix(OP.DCOUNT, self, accuracy, agg=True, dtype=int)
@@ -639,6 +684,32 @@ class TableExpr:
         self._ast.append(Limit(n))
         return self
 
+    def sample(self, n):
+        """Randomly sample n rows from the dataset.
+
+        Parameters
+        ----------
+        n: int
+            The number of rows to sample.
+        """
+        self._ast.append(Sample(n))
+        return self
+
+    def sample_distinct(self, n, column):
+        """Randomly sample n rows from the dataset with distinct values in column.
+
+        Parameters
+        ----------
+        n: int
+            The number of rows to sample.
+        column:
+            The column to sample distinct values from.
+        """
+        if isinstance(column, str):
+            column = self.columns[column]
+        self._ast.append(SampleDistinct(n, column))
+        return self
+
     def mv_expand(self, column):
         """Expand a dynamic column into one row per value.
 
@@ -659,3 +730,6 @@ class TableExpr:
         ]
         query_str = "\n".join([str(op) for op in ops]) + "\n"
         return query_str
+
+
+__all__ = ["TableExpr"]

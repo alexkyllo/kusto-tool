@@ -14,9 +14,7 @@ nox.options.reuse_existing_virtualenvs = True
 def test(session):
     """Run the tests."""
     session.install("pytest")
-    session.run("pdm", "install", "-G", "dev", external=True)
-    session.run("pdm", "run", "python", "--version")  # sanity check
-    session.run("pdm", "run", "pytest", external=True)
+    session.run("pytest")
 
 
 @nox.session(python="3.9")

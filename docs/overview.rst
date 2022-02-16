@@ -1,4 +1,4 @@
-Overview of `kusto_tool`
+Overview of `kusto-tool`
 ========================
 
 `kusto-tool` is a Python package providing a high-level interface for using
@@ -6,7 +6,12 @@ Overview of `kusto_tool`
 
 This package is an experimental work-in-progress and the API is unstable.
 
-The main feature of `kusto_tool` is a Python expression API for generating and
+Installation
+------------
+
+:code:`pip install kusto-tool`
+
+The main feature of `kusto-tool` is a Python expression API for generating and
 running Kusto queries directly from Python code, using method chaining to mimic
 Kusto Query Language (KQL)'s pipe-based query structure.
 

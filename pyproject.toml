@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "kusto_tool"
+name = "kusto-tool"
 authors = [{name = "Alex Kyllo", email = "alex.kyllo@gmail.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -43,3 +43,5 @@ testpaths = ["tests"]
 [tool.coverage]
 [tool.coverage.run]
 source = ["src/"]
+[tool.flit.module]
+name = "kusto_tool"

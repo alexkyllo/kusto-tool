@@ -50,6 +50,8 @@ Experimental, work-in-progress, unstable API.
 - [x] take, limit
 - [x] mv-expand
 - [x] Inspect columns from table by querying
+- [x] sample
+- [x] sample-distinct
 - [ ] mv-apply
 - [ ] datatable
 - [ ] facet
@@ -62,7 +64,6 @@ Experimental, work-in-progress, unstable API.
 - [ ] partition
 - [ ] pivot
 - [ ] range
-- [ ] sample, sample-distinct
 - [ ] search
 - [ ] serialize
 - [ ] top, top-hitters

@@ -1,5 +1,5 @@
 """Classes for interacting with a Kusto database."""
-
+import os
 from collections.abc import KeysView
 from timeit import default_timer as timer
 
@@ -27,9 +27,19 @@ def dict_to_datatable(dictionary: dict) -> str:
     return stmt
 
 
+def maybe_read_file(query):
+    """Read contents from a file if the argument is a file path."""
+    if os.path.isfile(query):
+        logger.info("Reading file {}.", query)
+        with open(query, "r", encoding="utf-8") as query_file:
+            return query_file.read()
+    return query
+
+
 def render_template_query(query, *args, **kwargs) -> str:
     """Render a query with optional parameters."""
     # Any list arguments need to be converted to Kusto list strings
+    query = maybe_read_file(query)
     converted_kwargs = {
         k: list_to_kusto(v) if isinstance(v, (list, tuple, set, KeysView)) else v
         for k, v in kwargs.items()
@@ -39,6 +49,7 @@ def render_template_query(query, *args, **kwargs) -> str:
 
 def render_set(query, table, folder, docstring, *args, replace=False, **kwargs) -> str:
     """Render a .set-or-[append|replace] command from a query."""
+    query = maybe_read_file(query)
     query_rendered = render_template_query(query, *args, **kwargs)
     command = "replace" if replace else "append"
     set_append_template = """.set-or-{{ command }} {{ table }}
@@ -116,7 +127,8 @@ class KustoDatabase:
         Parameters
         ----------
         query: str
-                The text of the Kusto query or commandto run.
+            The text of the Kusto query or command to run. Can also be a path to
+            a file containing a query.
         args: List[Any]
             Positional arguments to pass to the query as Jinja2 template params.
         kwargs: Dict[Any]
@@ -127,15 +139,17 @@ class KustoDatabase:
         pandas.DataFrame
             A DataFrame containing the query results.
         """
+        query = maybe_read_file(query)
         query_rendered = render_template_query(query, *args, **kwargs)
-        if query_rendered.startswith("."):
-            logger.info("Executing command on {}: {}", self.database, query_rendered)
-            start_time = timer()
-            result = self.client.execute_mgmt(self.database, query_rendered)
-        else:
-            start_time = timer()
-            logger.info("Executing query on {}: {}", self.database, query_rendered)
-            result = self.client.execute_query(self.database, query_rendered)
+
+        method = (
+            self.client.execute_mgmt
+            if query_rendered.startswith(".")
+            else self.client.execute_query
+        )
+        logger.info("Executing query on {}: {}", self.database, query_rendered)
+        start_time = timer()
+        result = method(self.database, query_rendered)
         end_time = timer()
         duration = end_time - start_time
         logger.info("Query execution completed in {:.2f} seconds.", duration)
@@ -182,7 +196,7 @@ class KustoDatabase:
         tables = self.show_tables()
         return table in tables.TableName.tolist()
 
-    def set(self, query, table, folder, docstring, *args, **kwargs):
+    def set_table(self, query, table, folder, docstring, *args, **kwargs):
         """
         Runs your query and appends or replaces the results to a table.
 

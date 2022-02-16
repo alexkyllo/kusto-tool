@@ -1,6 +1,4 @@
 """Test fakes."""
-import pandas as pd
-from azure.kusto.data._models import KustoResultColumn
 from azure.kusto.data.response import KustoResponseDataSetV2, KustoResultTable
 
 

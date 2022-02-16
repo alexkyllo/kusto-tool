@@ -8,12 +8,13 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.helpers import dataframe_from_result_table
 from loguru import logger
 
-from kusto_tool.expression import KTYPES, TableExpr
+from kusto_tool.expression import KTYPES, TableExpr, quote
 
 
 def list_to_kusto(lst):
-    # TODO: make this work for types other than string
-    return "dynamic([\n\t'" + "',\n\t'".join(list(lst)) + "'\n])"
+    """Convert a Python list to a Kusto list literal."""
+    list_str = [quote(i) for i in list(lst)]
+    return "dynamic([\n\t" + ",\n\t".join(list_str) + "\n])"
 
 
 def dict_to_datatable(dictionary: dict) -> str:
@@ -36,7 +37,7 @@ def render_template_query(query, *args, **kwargs) -> str:
     return jj.Template(query).render(*args, **converted_kwargs)
 
 
-def render_set(query, table, folder, docstring, replace=False, *args, **kwargs) -> str:
+def render_set(query, table, folder, docstring, *args, replace=False, **kwargs) -> str:
     """Render a .set-or-[append|replace] command from a query."""
     query_rendered = render_template_query(query, *args, **kwargs)
     command = "replace" if replace else "append"
@@ -105,7 +106,6 @@ class KustoDatabase:
         """
         if inspect:
             columns = self.execute(f".show table {name} cslschema").Schema.item()
-            breakpoint()
             columns = columns.split(",")
             columns = {col.split(":")[0]: KTYPES[col.split(":")[1]] for col in columns}
         return TableExpr(name, database=self, columns=columns, inspect=inspect)
@@ -242,4 +242,7 @@ class Cluster:
 
 
 def cluster(name):
+    """Convenience function to construct a Cluster instance.
+    Makes the query look more like KQL.
+    """
     return Cluster(name)

@@ -16,8 +16,16 @@ def test_dict_to_datatable():
 
 
 def test_list_to_kusto():
+    """A list of strings renders as a Kusto list."""
     lst = ["foo", "bar", "baz"]
     expected = "dynamic([\n\t'foo',\n\t'bar',\n\t'baz'\n])"
+    assert kdb.list_to_kusto(lst) == expected
+
+
+def test_list_to_kusto_int():
+    """A list of ints renders as a Kusto list."""
+    lst = [1, 2, 3]
+    expected = "dynamic([\n\t1,\n\t2,\n\t3\n])"
     assert kdb.list_to_kusto(lst) == expected
 
 

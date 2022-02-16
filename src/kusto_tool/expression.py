@@ -7,6 +7,8 @@ from typing import Any
 
 
 class attrdict:
+    """A dict whose members are accessible with the . operator."""
+
     def __init__(self, **kwargs):
         self._dict = kwargs
 
@@ -69,6 +71,7 @@ KTYPES = {
 
 
 def quote(val):
+    """Quote strings."""
     if isinstance(val, str):
         return f"'{val}'"
     return str(val)
@@ -659,3 +662,6 @@ class TableExpr:
         ]
         query_str = "\n".join([str(op) for op in ops]) + "\n"
         return query_str
+
+
+__all__ = ["TableExpr"]

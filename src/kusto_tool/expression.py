@@ -461,7 +461,7 @@ class Expand:
 
 
 class TableExpr:
-    """A tabular expression."""
+    """A table or tabular expression."""
 
     def __init__(self, name, database, columns=None, inspect=False):
         """A tabular expression.

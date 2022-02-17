@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "kusto_tool"
+name = "kusto-tool"
 authors = [{name = "Alex Kyllo", email = "alex.kyllo@gmail.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -16,13 +16,18 @@ azure-cli = ["azure-cli"]
 dev = [
     "black",
     "pylint",
-    "pytest",
-    "nox",
+]
+doc = [
     "furo",
-    "coverage",
-    "pytest-cov",
     "sphinx",
     "sphinx-autobuild",
+    "sphinx_rtd_theme",
+]
+test = [
+    "pytest",
+    "nox",
+    "coverage",
+    "pytest-cov",
     "pytest-mock",
 ]
 
@@ -38,3 +43,5 @@ testpaths = ["tests"]
 [tool.coverage]
 [tool.coverage.run]
 source = ["src/"]
+[tool.flit.module]
+name = "kusto_tool"

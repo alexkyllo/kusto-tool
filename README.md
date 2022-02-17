@@ -25,6 +25,10 @@ Experimental, work-in-progress, unstable API.
 - [ ] .create-or-alter function
 - [ ] .drop function
 
+#### Query limit settings
+
+- [ ] set notruncation etc.
+
 #### Policy management
 
 - [ ] retention policy

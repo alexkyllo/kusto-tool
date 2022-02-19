@@ -253,7 +253,9 @@ class KustoDatabase:
         """
         if not force:
             if os.path.isfile(path):
+                logger.info("Reading dataframe from existing file {}", path)
                 return pd.read_parquet(path)
+        logger.info("File {} does not exist, will run query.", path)
         df = self.execute(query, *args, **kwargs)
         df.to_parquet(path, index=False)
         return df

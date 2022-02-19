@@ -1,9 +1,11 @@
 """Classes for interacting with a Kusto database."""
 import os
 from collections.abc import KeysView
+from pathlib import Path
 from timeit import default_timer as timer
 
 import jinja2 as jj
+import pandas as pd
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.helpers import dataframe_from_result_table
 from loguru import logger
@@ -225,6 +227,36 @@ class KustoDatabase:
         return self.execute(
             render_set(query, table, folder, docstring, replace=False, *args, **kwargs),
         )
+
+    def to_parquet(self, query, path, *args, force=False, **kwargs):
+        """Run the given query, cache the results as a local parquet file, and
+        return results as a Pandas DataFrame.
+
+        Parameters
+        ----------
+        query: str
+            The text of the Kusto query to run.
+        path: str
+            The path to save the parquet file.
+        force: bool, default False
+            If False, the data will be read from the cached parquet file if it
+            exists. If True, the data will be re-downloaded regardless.
+        args: List[Any]
+            Positional arguments to pass to the query as Jinja2 template params.
+        kwargs: Dict[Any]
+            Keyword arguments to pass to the query as Jinja2 template params.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the results of the control command.
+        """
+        if not force:
+            if os.path.isfile(path):
+                return pd.read_parquet(path)
+        df = self.execute(query, *args, **kwargs)
+        df.to_parquet(path, index=False)
+        return df
 
     def __str__(self):
         return f"{str(self.cluster)}.database('{self.database}')"

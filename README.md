@@ -7,6 +7,8 @@ A high-level Python library and CLI to make it easier to use Azure Data Explorer
 
 Experimental, work-in-progress, unstable API.
 
+[Documentation](https://kusto-tool.readthedocs.io/en/latest/overview.html)
+
 ## TODO
 
 ### Database API
@@ -92,3 +94,8 @@ Experimental, work-in-progress, unstable API.
 - [ ] stdev, stdevif
 - [ ] tdigest, tdigest_merge
 - [ ] variance, variancep, varianceif
+
+### Other functions and operators
+
+- [ ] [start|end]of[day|week|month|year]
+- [ ] between

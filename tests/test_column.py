@@ -17,3 +17,11 @@ def test_column_ncontains():
 
 def test_column_nhas():
     assert str(Column("foo", str).nhas("bar")) == "foo !has 'bar'"
+
+
+def test_between():
+    assert str(Column("foo", int).between(1, 3)) == "foo between(1 .. 3)"
+
+
+def test_nbetween():
+    assert str(Column("foo", int).nbetween(1, 3)) == "foo !between(1 .. 3)"

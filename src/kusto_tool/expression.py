@@ -92,6 +92,19 @@ class Prefix:
         return f"{self.op}({terms})"
 
 
+class Between:
+    def __init__(self, lhs, left, right, negate=False):
+        self.lhs = lhs
+        self.left = left
+        self.right = right
+        self.negate = negate
+        self.dtype = bool
+
+    def __str__(self):
+        neg = "!" if self.negate else ""
+        return f"{self.lhs} {neg}between({self.left} .. {self.right})"
+
+
 class Infix:
     # TODO: does this need __add__, __sub__?
     def __init__(self, op, lhs, rhs, dtype=Any):
@@ -403,12 +416,22 @@ class Column:
         return Prefix(OP.BAG_UNPACK, self)
 
     def asc(self):
+        """Sort this column in ascending order."""
         self._asc = True
         return self
 
     def desc(self):
+        """Sort this column in descending order."""
         self._asc = False
         return self
+
+    def between(self, left, right):
+        """Returns True if the column value is between left (inclusive) and right (inclusive)."""
+        return Between(self, left, right)
+
+    def nbetween(self, left, right):
+        """Returns False if the column value is between left (inclusive) and right (inclusive)."""
+        return Between(self, left, right, negate=True)
 
     def __getattr__(self, attr):
         """Access a field in a dynamic property bag."""

@@ -97,5 +97,5 @@ Experimental, work-in-progress, unstable API.
 
 ### Other functions and operators
 
-- [ ] [start|end]of[day|week|month|year]
-- [ ] between
+- [x] [start|end]of[day|week|month|year]
+- [x] between

@@ -95,6 +95,7 @@ Experimental, work-in-progress, unstable API.
 - [ ] tdigest, tdigest_merge
 - [ ] variance, variancep, varianceif
 
-### Other functions
+### Other functions and operators
 
 - [ ] [start|end]of[day|week|month|year]
+- [ ] between

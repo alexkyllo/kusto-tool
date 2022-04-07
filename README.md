@@ -94,3 +94,7 @@ Experimental, work-in-progress, unstable API.
 - [ ] stdev, stdevif
 - [ ] tdigest, tdigest_merge
 - [ ] variance, variancep, varianceif
+
+### Other functions
+
+- [ ] [start|end]of[day|week|month|year]

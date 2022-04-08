@@ -1,7 +1,8 @@
 from azure.kusto.data.helpers import dataframe_from_result_table
+from pytest import raises
+
 from kusto_tool import database as kdb
 from kusto_tool import expression as exp
-from pytest import raises
 
 from .fake_database import FakeDatabase, FakeKustoClient, FakeKustoResultTable
 
@@ -190,7 +191,34 @@ def test_extend():
     assert query == expected
 
 
+def test_summarize_adds_aliases():
+    """summarize adds aliases to column list."""
+    tbl = (
+        kdb.cluster("help")
+        .database("Samples")
+        .table("StormEvents", columns={"State": str, "EventType": str, "DamageProperty": int})
+    )
+    query = tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty).summarize(
+        sum_damage=tbl.DamageProperty.sum(), by=[tbl.State, tbl.EventType]
+    )
+    query = query.sort(query.sum_damage).limit(20)
+    expected = """cluster('help').database('Samples').['StormEvents']
+| project
+\tState,
+\tEventType,
+\tDamageProperty
+| summarize
+\tsum_damage=sum(DamageProperty)
+\tby State, EventType
+| order by
+\tsum_damage
+| limit 20
+"""
+    assert str(query) == expected
+
+
 def test_long_query():
+    """test a longer query"""
     tbl = (
         kdb.cluster("help")
         .database("Samples")
@@ -199,7 +227,7 @@ def test_long_query():
     query = (
         tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty)
         .summarize(sum_damage=tbl.DamageProperty.sum(), by=[tbl.State, tbl.EventType])
-        .sort(tbl.sum_damage)
+        .sort("sum_damage")
         .limit(20)
     )
     expected = """cluster('help').database('Samples').['StormEvents']
@@ -213,5 +241,23 @@ def test_long_query():
 | order by
 \tsum_damage
 | limit 20
+"""
+    assert str(query) == expected
+
+
+def test_expr_idempotent():
+    """Querying a tbl multiple times is idempotent."""
+    tbl = (
+        kdb.cluster("help")
+        .database("Samples")
+        .table("StormEvents", columns={"State": str, "EventType": str, "DamageProperty": int})
+    )
+    query = tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty)
+    query = tbl.project(tbl.State, tbl.EventType, tbl.DamageProperty)
+    expected = """cluster('help').database('Samples').['StormEvents']
+| project
+\tState,
+\tEventType,
+\tDamageProperty
 """
     assert str(query) == expected

@@ -1,5 +1,5 @@
 from kusto_tool.database import KustoDatabase
-from kusto_tool.expression import Column, Order, TableExpr
+from kusto_tool.expression import Column, Order, TableExpr, asc
 
 
 def test_order_1arg():
@@ -48,3 +48,13 @@ def test_sort_tbl():
     assert (
         str(tbl.sort(tbl.foo)) == "cluster('cluster').database('db').['tbl']\n| order by\n\tfoo\n"
     )
+
+
+def test_order_str():
+    """order works with a string column name"""
+    assert str(Order("foo")) == "| order by\n\tfoo"
+
+
+def test_order_str_asc():
+    """order works with a string column name"""
+    assert str(Order(asc("foo"))) == "| order by\n\tfoo asc"

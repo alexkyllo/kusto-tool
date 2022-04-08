@@ -121,7 +121,7 @@ class KustoDatabase:
             columns = self.execute(f".show table {name} cslschema").Schema.item()
             columns = columns.split(",")
             columns = {col.split(":")[0]: KTYPES[col.split(":")[1]] for col in columns}
-        return TableExpr(name, database=self, columns=columns, inspect=inspect)
+        return TableExpr(name, database=self, columns=columns)
 
     def execute(self, query: str, *args, **kwargs):
         """Execute a query or command.

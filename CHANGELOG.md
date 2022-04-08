@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2022-04-08
+
+- Add math functions
+- Add type conversion functions
+- Fix bug that was making TableExpr non-idempotent--now it returns an updated copy.
+
 ## 2022-04-07
 
 - Add `[start|end]of[day|week|month|year]` functions

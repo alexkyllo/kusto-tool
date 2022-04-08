@@ -322,11 +322,11 @@ class ListLit:
 class Column:
     """A column in a tabular expression."""
 
-    def __init__(self, name: str, dtype: str):
+    def __init__(self, name: str, dtype: str, ascending: bool = False):
         """"""
         self.name = name
         self.dtype = dtype
-        self._asc = False
+        self.ascending = ascending
 
     def __str__(self):
         return self.name
@@ -418,12 +418,12 @@ class Column:
 
     def asc(self):
         """Sort this column in ascending order."""
-        self._asc = True
+        self.ascending = True
         return self
 
     def desc(self):
         """Sort this column in descending order."""
-        self._asc = False
+        self.ascending = False
         return self
 
     def between(self, left, right):
@@ -452,6 +452,34 @@ class Evaluate:
         return f"| evaluate {str(self.expr)}"
 
 
+def asc(expr):
+    """Sort the column in ascending order.
+
+    Parameters
+    ----------
+    expr:
+        A column name string or Column expression instance.
+    """
+    if isinstance(expr, Column):
+        expr.ascending = True
+        return expr
+    return Column(expr, typeof(expr), ascending=True)
+
+
+def desc(expr):
+    """Sort the column in descending order.
+
+    Parameters
+    ----------
+    expr:
+        A column name string or Column expression instance.
+    """
+    if isinstance(expr, Column):
+        expr.ascending = False
+        return expr
+    return Column(expr, typeof(expr), asc=False)
+
+
 class Order:
     def __init__(self, *args):
         self.args = args
@@ -459,10 +487,13 @@ class Order:
     def __str__(self):
         args = []
         for arg in self.args:
-            if isinstance(arg, Column) and arg._asc:
-                args.append(quote(arg) + " asc")
+            if isinstance(arg, Column):
+                if arg.ascending:
+                    args.append(quote(arg) + " asc")
+                else:
+                    args.append(quote(arg))
             else:
-                args.append(quote(arg))
+                args.append(arg)
         args_str = ",\n\t".join(args)
         return f"| order by\n\t{args_str}"
 
@@ -487,7 +518,7 @@ class Expand:
 class TableExpr:
     """A table or tabular expression."""
 
-    def __init__(self, name, database, columns=None, inspect=False):
+    def __init__(self, name, database, columns=None, ast=None):
         """A tabular expression.
 
         Parameters
@@ -501,14 +532,12 @@ class TableExpr:
             1. A dictionary where keys are column names and values are
             data type names, or
             2. A list of Column instances.
-        inspect: bool, default False
-            If true, columns will be inspected from the database. If columns
-            list is provided and inspect is true, inspect takes precedence.
+        ast: list, default None
+            Abstract syntax tree used internally to store a nested list of expressions.
         """
-        self._ast = []  # TODO: make this immutable
+        self._ast = ast or []
         self.name = name
         self.database = database
-        # TODO: implement and call inspect() to get schema metadata if True
         if columns is None:
             self.columns = {}
         elif isinstance(columns, (list, tuple)):
@@ -517,7 +546,6 @@ class TableExpr:
             self.columns = {k: Column(k, v) for k, v in columns.items()}
         else:
             raise ValueError("columns must be a dict or a list of Columns.")
-        self.inspect = inspect
 
     def __getattr__(self, name):
         try:
@@ -543,28 +571,33 @@ class TableExpr:
         -------
         A table expression.
         """
-        self._ast.append(Project(*args, **kwargs))
         renamed = {k: Column(k, typeof(v)) for k, v in kwargs.items()}
-        self.columns = {k: v for k, v in self.columns.items() if k in args}
-        self.columns = {**self.columns, **renamed}
-        return self
+        columns = {k: v for k, v in self.columns.items() if k in args}
+        columns = {**columns, **renamed}
+        return TableExpr(
+            self.name, self.database, columns=columns, ast=[*self._ast, Project(*args, **kwargs)]
+        )
 
     def collect(self):
-        """"""
+        """Compile the expression to a query, execute it, and return results."""
         query_str = str(self)
         return self.database.query(query_str)
 
     def count(self):
-        self._ast.append(Count())
-        return self
+        """Get the count of rows that would be returned by the expression."""
+        return TableExpr(self.name, self.database, columns=self.columns, ast=[*self._ast, Count()])
 
     def distinct(self, *args):
-        self._ast.append(Distinct(*args))
-        return self
+        """Distinct values in the given column(s)."""
+        return TableExpr(
+            self.name, self.database, columns=self.columns, ast=[*self._ast, Distinct(*args)]
+        )
 
     def where(self, *args):
-        self._ast.append(Where(*args))
-        return self
+        """Filter the expression by one or more predicates."""
+        return TableExpr(
+            self.name, self.database, columns=self.columns, ast=[*self._ast, Where(*args)]
+        )
 
     def join(self, right, on, kind, *args, strategy=None):
         """Join this table expression to another.
@@ -590,8 +623,12 @@ class TableExpr:
             If "shuffle" then a shuffle join is used.
             If another value or None, a single-node join strategy is used.
         """
-        self._ast.append(Join(right, on, kind=kind, strategy=strategy))
-        return self
+        return TableExpr(
+            self.name,
+            self.database,
+            columns=self.columns,
+            ast=[*self._ast, Join(right, on, kind=kind, strategy=strategy)],
+        )
 
     def summarize(self, by=None, shuffle=False, shufflekey=None, num_partitions=None, **kwargs):
         """Aggregate by columns.
@@ -630,17 +667,22 @@ class TableExpr:
             by_cols[col.name] = col
 
         kwarg_cols = {k: Column(k, typeof(v)) for k, v in kwargs.items()}
-        self.columns = {**by_cols, **kwarg_cols}
-        self._ast.append(
-            Summarize(
-                by=by,
-                shuffle=shuffle,
-                shufflekey=shufflekey,
-                num_partitions=num_partitions,
-                **kwargs,
-            )
+        columns = {**by_cols, **kwarg_cols}
+        return TableExpr(
+            self.name,
+            self.database,
+            columns=columns,
+            ast=[
+                *self._ast,
+                Summarize(
+                    by=by,
+                    shuffle=shuffle,
+                    shufflekey=shufflekey,
+                    num_partitions=num_partitions,
+                    **kwargs,
+                ),
+            ],
         )
-        return self
 
     def extend(self, **kwargs):
         """Add new columns calculated from expressions.
@@ -650,14 +692,14 @@ class TableExpr:
         kwargs: dict
             Aliased expressions, e.g. foo="bar", baz="quux"
         """
-        self._ast.append(Extend(**kwargs))
         new_cols = {}
         for key, val in kwargs.items():
             if key not in self.columns:
                 new_cols[key] = Column(key, typeof(val))
         columns = {**self.columns, **new_cols}
-        new_inst = TableExpr(self.name, self.database, columns)
-        new_inst._ast = self._ast
+        new_inst = TableExpr(
+            self.name, self.database, columns=columns, ast=[*self._ast, Extend(**kwargs)]
+        )
         return new_inst
 
     def order(self, *args):
@@ -668,8 +710,9 @@ class TableExpr:
         args: array
             The columns to sort by.
         """
-        self._ast.append(Order(*args))
-        return self
+        return TableExpr(
+            self.name, self.database, columns=self.columns, ast=[*self._ast, Order(*args)]
+        )
 
     def sort(self, *args):
         """Order the result set by the given columns. Alias for .order().
@@ -683,8 +726,9 @@ class TableExpr:
 
     def evaluate(self, expr):
         """Evaluate a Kusto plugin expression."""
-        self._ast.append(Evaluate(expr))
-        return self
+        return TableExpr(
+            self.name, self.database, columns=self.columns, ast=[*self._ast, Evaluate(expr)]
+        )
 
     def limit(self, n):
         """Limit the result set to the first n rows.
@@ -694,8 +738,7 @@ class TableExpr:
         n: int
             The number of rows to return.
         """
-        self._ast.append(Limit(n))
-        return self
+        return TableExpr(self.name, self.database, columns=self.columns, ast=[*self._ast, Limit(n)])
 
     def take(self, n):
         """Limit the result set to the first n rows. Alias for .limit().
@@ -705,8 +748,7 @@ class TableExpr:
         n: int
             The number of rows to return.
         """
-        self._ast.append(Limit(n))
-        return self
+        return self.limit(n)
 
     def sample(self, n):
         """Randomly sample n rows from the dataset.
@@ -716,8 +758,9 @@ class TableExpr:
         n: int
             The number of rows to sample.
         """
-        self._ast.append(Sample(n))
-        return self
+        return TableExpr(
+            self.name, self.database, columns=self.columns, ast=[*self._ast, Sample(n)]
+        )
 
     def sample_distinct(self, n, column):
         """Randomly sample n rows from the dataset with distinct values in column.
@@ -731,8 +774,12 @@ class TableExpr:
         """
         if isinstance(column, str):
             column = self.columns[column]
-        self._ast.append(SampleDistinct(n, column))
-        return self
+        return TableExpr(
+            self.name,
+            self.database,
+            columns=self.columns,
+            ast=[*self._ast, SampleDistinct(n, column)],
+        )
 
     def mv_expand(self, column):
         """Expand a dynamic column into one row per value.
@@ -744,8 +791,12 @@ class TableExpr:
         """
         if isinstance(column, str):
             column = self.columns[column]
-        self._ast.append(Expand(column))
-        return self
+        return TableExpr(
+            self.name,
+            self.database,
+            columns=self.columns,
+            ast=[*self._ast, Expand(column)],
+        )
 
     def __str__(self):
         ops = [

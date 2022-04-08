@@ -9,7 +9,7 @@ class FakeDatabase:
         self.cluster = cluster
         self.database = database
 
-    def query(self, query):
+    def execute(self, query):
         """Just return the query instead of running it."""
         return query
 

@@ -581,7 +581,7 @@ class TableExpr:
     def collect(self):
         """Compile the expression to a query, execute it, and return results."""
         query_str = str(self)
-        return self.database.query(query_str)
+        return self.database.execute(query_str)
 
     def count(self):
         """Get the count of rows that would be returned by the expression."""

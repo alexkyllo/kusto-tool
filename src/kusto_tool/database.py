@@ -101,8 +101,6 @@ class KustoDatabase:
         ----------
         name: str
             The name of the table in the database.
-        database: KustoDatabase
-            The name of the database containing the table.
         columns: dict or list
             Either:
             1. A dictionary where keys are column names and values are
@@ -118,7 +116,10 @@ class KustoDatabase:
             A table expression instance.
         """
         if inspect:
-            columns = self.execute(f".show table {name} cslschema").Schema.item()
+            columns = self.execute(f".show table {name} cslschema").Schema
+            if len(columns) < 1:
+                raise KeyError(f"Table {name} does not exist in the database.")
+            columns = columns.item()
             columns = columns.split(",")
             columns = {col.split(":")[0]: KTYPES[col.split(":")[1]] for col in columns}
         return TableExpr(name, database=self, columns=columns)

@@ -5,6 +5,8 @@
 - Add math functions
 - Add type conversion functions
 - Fix bug that was making TableExpr non-idempotent--now it returns an updated copy.
+- Catch error for inspecting nonexistent table
+- Fix bug from rename of Database.query -> Database.execute
 
 ## 2022-04-07
 

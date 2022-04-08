@@ -99,3 +99,12 @@ Experimental, work-in-progress, unstable API.
 
 - [x] [start|end]of[day|week|month|year]
 - [x] between
+- [x] typecasting: real(), long(), datetime() etc.
+- [x] math functions: log, sin, cos etc.
+- [ ] string functions: strlen etc.
+- [ ] null
+- [ ] date functions: getyear, getmonth etc.
+- [ ] case / iff
+- [ ] hash
+- [ ] welch_test
+- [ ] array_ functions

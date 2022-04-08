@@ -505,7 +505,7 @@ class TableExpr:
             If true, columns will be inspected from the database. If columns
             list is provided and inspect is true, inspect takes precedence.
         """
-        self._ast = []
+        self._ast = []  # TODO: make this immutable
         self.name = name
         self.database = database
         # TODO: implement and call inspect() to get schema metadata if True

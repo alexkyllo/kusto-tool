@@ -6,6 +6,21 @@ from typing import Any
 from kusto_tool.expression import OP, Column, Prefix, typeof
 
 
+def function(name, *args):
+    """Translate to any Kusto function call.
+
+    Parameters
+    ----------
+    name: str
+        The name of the Kusto function to call.
+    args: list
+        A list of positional arguments to the function.
+    """
+    if len(args) > 0:
+        Prefix(name, *args, dtype=typeof(args[0]))
+    return Prefix(name, *args)
+
+
 def strcat(*args):
     """String concatenation.
 

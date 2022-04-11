@@ -6,6 +6,11 @@ from kusto_tool.expression import Column, Summarize, TableExpr
 from .fake_database import FakeDatabase
 
 
+def test_function():
+    """any function can be translated to Kusto"""
+    assert str(F.function("wiggle", 4, "foo")) == "wiggle(4, 'foo')"
+
+
 def test_strcat():
     """strcat translates correctly"""
     assert str(F.strcat(Column("foo", str), "_", "bar")) == "strcat(foo, '_', 'bar')"

@@ -45,3 +45,6 @@ testpaths = ["tests"]
 source = ["src/"]
 [tool.flit.module]
 name = "kusto_tool"
+[tool.pylint]
+[tool.pylint.format]
+good-names=pi,i,j,k

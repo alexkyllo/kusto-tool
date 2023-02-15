@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2023-02-15
+
+- add `function.function()` for calling arbitrary Kusto functions
+- Publish v0.4.1 to PyPI
+
 ## 2022-04-08
 
 - Add math functions
@@ -7,6 +12,7 @@
 - Fix bug that was making TableExpr non-idempotent--now it returns an updated copy.
 - Catch error for inspecting nonexistent table
 - Fix bug from rename of Database.query -> Database.execute
+- Publish v0.3.1 to PyPI
 
 ## 2022-04-07
 

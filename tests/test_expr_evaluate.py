@@ -23,3 +23,24 @@ def test_evaluate_bag_unpack_wrong_dtype():
     tbl = TableExpr("tbl", KustoDatabase("cluster", "db"), columns={"foo": str})
     with raises(AssertionError):
         tbl.evaluate(tbl.foo.bag_unpack())
+
+
+def test_evaluate_sql_request():
+    sql = "SELECT * FROM \"mytable\" WHERE Date = '2022-02-14'"
+    tbl = TableExpr("tbl", KustoDatabase("cluster", "db"), columns={"foo": str})
+    expr = tbl.evaluate(
+        F.function(
+            "sql_request",
+            "Server=tcp:contoso.database.windows.net,1433;"
+            'Authentication="Active Directory Integrated";'
+            "Initial Catalog=Fabrikam;",
+            sql,
+        )
+    )
+    expected = (
+        "cluster('cluster').database('db').['tbl']\n"
+        "| evaluate sql_request('Server=tcp:contoso.database.windows.net,1433;Authentication="
+        '"Active Directory Integrated";Initial Catalog=Fabrikam;\', '
+        "'SELECT * FROM \"mytable\" WHERE Date = \\'2022-02-14\\'')\n"
+    )
+    assert str(expr) == expected

@@ -77,7 +77,7 @@ KTYPES = {
 def quote(val):
     """Quote strings."""
     if isinstance(val, str):
-        return f"'{val}'"
+        return repr(val)
     return str(val)
 
 

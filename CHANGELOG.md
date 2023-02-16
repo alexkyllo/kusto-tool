@@ -2,6 +2,11 @@
 
 ## 2023-02-15
 
+- Use `repr()` inside of `quote()` so that escaping is preserved
+- Publish v0.4.2 to PyPI
+
+## 2023-02-15
+
 - add `function.function()` for calling arbitrary Kusto functions
 - Publish v0.4.1 to PyPI
 
